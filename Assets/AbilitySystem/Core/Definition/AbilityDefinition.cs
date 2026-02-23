@@ -7,4 +7,5 @@ public class AbilityDefinition : ScriptableObject
     [SerializeField] public string abilityName;
     [SerializeField] public float cooldown;
     [SerializeField] public List<Cost> costs;
+    [SerializeField] public List<AbilityEffectDefinition> effectDefinitions;
 }

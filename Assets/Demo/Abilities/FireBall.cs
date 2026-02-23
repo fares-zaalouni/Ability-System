@@ -13,15 +13,15 @@ public class FireBall: MonoBehaviour
 
     public void Initialize(ICaster caster)
     {
-        DamageEffect damageEffect = new DamageEffect(50, caster);
         AOECircleStrategy targetingStrategy = new AOECircleStrategy(_radius);
         _targetingStrategy = targetingStrategy;
-        List<IAbilityEffect> activeEffects = new List<IAbilityEffect> { damageEffect };
-        _abilityInstance = new AbilityInstance(_abilityDefinition, caster, activeEffects, targetingStrategy);
+        _abilityInstance = new AbilityInstance(_abilityDefinition, caster, targetingStrategy);
     }
 
     public void CastFireBall(Vector3 targetPoint)
     {
+        Debug.Log($"Casting FireBall at {targetPoint}");
+        
         if (_abilityInstance != null)
         {
             _targetingStrategy.UpdateCenter(targetPoint);

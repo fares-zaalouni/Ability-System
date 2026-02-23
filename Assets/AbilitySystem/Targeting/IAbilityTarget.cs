@@ -5,5 +5,4 @@ public interface IAbilityTarget
 {
     bool IsTargetable();
     bool CanApplyEffect(IAbilityEffect effect);
-    void ApplyEffect(IAbilityEffect effect);
 }

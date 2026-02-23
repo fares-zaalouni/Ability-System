@@ -1,21 +1,16 @@
 using System;
 using UnityEngine;
 
-public class Enemy : MonoBehaviour, IAbilityTarget
+public class Enemy : StatusEffectReceiver,
+IAbilityTarget,
+IDamageable
+
 {
-    public void ApplyEffect(IAbilityEffect effect)
+    private Health _health;
+
+    void Start()
     {
-        Debug.Log($"Enemy received effect: {effect}");
-        switch (effect)
-        {
-            case DamageEffect damageEffect:
-                Debug.Log($"Enemy took {damageEffect.DamageAmount} damage from {damageEffect.Source}");
-                break;
-            default:
-                Debug.Log("Enemy received an unknown effect");
-                break;
-        }
-        
+        _health = GetComponent<Health>();
     }
     public bool IsTargetable()
     {
@@ -23,22 +18,17 @@ public class Enemy : MonoBehaviour, IAbilityTarget
     }
     public bool CanApplyEffect(IAbilityEffect effect)
     {
-        if (effect is DamageEffect)
+        if (effect is DamageEffect || effect is DOTEffect)
         {
             return true;
         }
         return false;
     }
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public void TakeDamage(float amount, ICaster source = null)
     {
-        
+        Debug.Log($"Enemy took {amount} damage from {source}");
+        _health.TakeDamage(amount);
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+   
 }

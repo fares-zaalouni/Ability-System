@@ -7,14 +7,12 @@ public class AbilityInstance
     private AbilityDefinition _definition;
     private ICaster _caster;
     private float _cooldownRemaining;
-    private List<IAbilityEffect> _effects;
     public ITargetingStrategy TargetingStrategy { get; private set; }
-    public AbilityInstance(AbilityDefinition definition, ICaster caster, List<IAbilityEffect> activeEffects = null, ITargetingStrategy targetingStrategy = null)
+    public AbilityInstance(AbilityDefinition definition, ICaster caster, ITargetingStrategy targetingStrategy = null)
     {
         _definition = definition;
         _caster = caster;
         TargetingStrategy = targetingStrategy;
-        _effects = activeEffects ?? new List<IAbilityEffect>();
         _cooldownRemaining = 0f;
     }
 
@@ -30,16 +28,17 @@ public class AbilityInstance
             Debug.Log($"Casting {_definition.abilityName}");
             _caster.ConsumeCost(_definition.costs);
             _cooldownRemaining = _definition.cooldown;
-            IAbilityTarget[] targets = TargetingStrategy.GetTargets().ToArray();
+            List<IAbilityTarget> targets = TargetingStrategy.GetTargets();
 
-            Debug.Log($"Found {targets.Length} targets for {_definition.abilityName}");
+            Debug.Log($"Found {targets.Count} targets for {_definition.abilityName}");
             foreach (var target in targets)
             {
-                foreach (var effect in _effects)
+                foreach (var effectDefinition in _definition.effectDefinitions)
                 {
+                    var effect = effectDefinition.CreateEffect(_caster);
                     if (target.CanApplyEffect(effect))
                     {
-                        target.ApplyEffect(effect);
+                        effect.ApplyTo(target);
                     }
                 }
             }
