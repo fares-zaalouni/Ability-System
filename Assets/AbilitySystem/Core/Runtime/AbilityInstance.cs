@@ -5,11 +5,17 @@ using UnityEngine;
 public class AbilityInstance
 {
     private AbilityDefinition _definition;
+    private List<IAbilityAction> _actions; 
+    private AbilityRunner _runner;
     private ICaster _caster;
     private float _cooldownRemaining;
     public ITargetingStrategy TargetingStrategy { get; private set; }
     public AbilityInstance(AbilityDefinition definition, ICaster caster, ITargetingStrategy targetingStrategy = null)
     {
+        _actions = new List<IAbilityAction>();
+        AbilityContext context = new AbilityContext(caster, new List<IAbilityTarget>());
+        
+        _runner = new AbilityRunner(_actions, context);
         _definition = definition;
         _caster = caster;
         TargetingStrategy = targetingStrategy;

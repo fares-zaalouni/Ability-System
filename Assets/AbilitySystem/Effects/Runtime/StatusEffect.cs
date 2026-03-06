@@ -35,7 +35,6 @@ public abstract class StatusEffect
 
     public abstract void ApplyTick(IAbilityTarget target);
     
-
     public bool IsExpired => RemainingDuration <= 0f;
 
 }
