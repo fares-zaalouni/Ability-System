@@ -4,19 +4,15 @@ using UnityEngine;
 
 public class AOECircleStrategy : ITargetingStrategy
 {
-    private Vector3 _center;
     private float _radius;
     public AOECircleStrategy(float radius)
     {
         _radius = radius;
     }
-    public void UpdateCenter(Vector3 center)
+    public List<IAbilityTarget> GetTargets(AbilityContext context)
     {
-        _center = center;
-    }
-    public List<IAbilityTarget> GetTargets()
-    {
-        Collider[] colliders = Physics.OverlapSphere(_center, _radius);
+        Vector3 center = context.TargetPoint;
+        Collider[] colliders = Physics.OverlapSphere(center, _radius);
         List<IAbilityTarget> targets = new List<IAbilityTarget>();
         foreach (Collider collider in colliders)
         {

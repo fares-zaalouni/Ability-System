@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class StatusEffectReceiver : MonoBehaviour
+public class StatusEffectReceiver : MonoBehaviour, IStatusEffectReceiver
 {
     protected List<StatusEffect> _activeEffects = new List<StatusEffect>();
     public virtual void ApplyStatusEffectTo(StatusEffect statusEffect, ICaster source = null, int stacks = 1)
@@ -43,6 +43,7 @@ public abstract class StatusEffectReceiver : MonoBehaviour
             {
                 //effect.Definition.OnRemove(gameObject); // Cleanup (e.g., restore speed)
                 _activeEffects.RemoveAt(i);
+                continue;
             }
             effect.Tick(deltaTime, this as IAbilityTarget);    
         }

@@ -9,16 +9,17 @@ public class AbilityInstance
     private AbilityRunner _runner;
     private ICaster _caster;
     private float _cooldownRemaining;
-    public ITargetingStrategy TargetingStrategy { get; private set; }
-    public AbilityInstance(AbilityDefinition definition, ICaster caster, ITargetingStrategy targetingStrategy = null)
+    public AbilityInstance(AbilityDefinition definition, ICaster caster)
     {
         _actions = new List<IAbilityAction>();
-        AbilityContext context = new AbilityContext(caster, new List<IAbilityTarget>());
-        
+        AbilityContext context = new AbilityContext(caster);
+        foreach (var actionDef in definition.actionDefinitions)
+        {
+            _actions.Add(actionDef.CreateRuntimeAction());
+        }
         _runner = new AbilityRunner(_actions, context);
         _definition = definition;
         _caster = caster;
-        TargetingStrategy = targetingStrategy;
         _cooldownRemaining = 0f;
     }
 
@@ -34,10 +35,10 @@ public class AbilityInstance
             Debug.Log($"Casting {_definition.abilityName}");
             _caster.ConsumeCost(_definition.costs);
             _cooldownRemaining = _definition.cooldown;
-            List<IAbilityTarget> targets = TargetingStrategy.GetTargets();
+            //List<IAbilityTarget> targets = TargetingStrategy.GetTargets();
 
-            Debug.Log($"Found {targets.Count} targets for {_definition.abilityName}");
-            foreach (var target in targets)
+            /*Debug.Log($"Found {targets.Count} targets for {_definition.abilityName}");*/
+            /*foreach (var target in targets)
             {
                 foreach (var effectDefinition in _definition.effectDefinitions)
                 {
@@ -47,7 +48,8 @@ public class AbilityInstance
                         effect.ApplyTo(target);
                     }
                 }
-            }
+            }*/
+            _runner.Next();
         }
     }
 }

@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 89fd4bf691e516344b1680e83f85a65e, type: 3}
-  m_Name: FireBallDamage
-  m_EditorClassIdentifier: Assembly-CSharp::DamageEffectDefinition
-  damageAmount: 35
+  m_Script: {fileID: 11500000, guid: 2949316f23bd95746b8d6ce9d4b23727, type: 3}
+  m_Name: SetCenterAction
+  m_EditorClassIdentifier: Assembly-CSharp::SetCenterActionDefinition
+  _center: {x: 0, y: 0, z: 0}

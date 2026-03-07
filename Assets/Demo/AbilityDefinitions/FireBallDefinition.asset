@@ -10,13 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ed9410be9cc68794f8f3639b2f974d91, type: 3}
-  m_Name: FireBall
+  m_Name: FireBallDefinition
   m_EditorClassIdentifier: Assembly-CSharp::AbilityDefinition
   abilityName: fireball
-  cooldown: 30
+  cooldown: 20
   costs:
   - resourceName: mana
-    amount: 30
-  effectDefinitions:
-  - {fileID: 11400000, guid: b587225b3a513274a85df6da128bbbd9, type: 2}
-  - {fileID: 11400000, guid: 30b45a400fc45524ea0acec00b55cb98, type: 2}
+    amount: 50
+  actionDefinitions:
+  - {fileID: 11400000, guid: a4a28dbe25cba6348a3ef72e6994b273, type: 2}
+  - {fileID: 11400000, guid: e141101fb2c242e48a34a0d6f8674e2c, type: 2}
+  - {fileID: 11400000, guid: b08404f93aed79c4c88fe9a263679b7d, type: 2}
+  - {fileID: 11400000, guid: 3179524c2ba8d744aa3cd1494e25ce78, type: 2}

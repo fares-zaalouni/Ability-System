@@ -21,8 +21,7 @@ public class Player : MonoBehaviour, ICaster, IAbilityTarget
     {
         if(!casted)
         {
-            Vector3 targetPoint = transform.position + transform.forward * 2f;
-            _fireBallInstance.CastFireBall(targetPoint);
+            _fireBallInstance.CastFireBall();
             casted = true;
         }
     }

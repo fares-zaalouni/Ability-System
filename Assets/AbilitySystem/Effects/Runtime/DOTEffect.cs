@@ -11,7 +11,7 @@ public class DOTEffect : StatusEffect, IAbilityEffect
     }
     public void ApplyTo(IAbilityTarget target)
     {
-        if (target is StatusEffectReceiver statusEffectReceiver)
+        if (target is IStatusEffectReceiver statusEffectReceiver)
         {
             statusEffectReceiver.ApplyStatusEffectTo(this, source);
         }

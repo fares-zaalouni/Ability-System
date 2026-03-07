@@ -13,11 +13,12 @@ public abstract class StatusEffect
 
     public StatusEffect(AbilityEffectDefinition definition, float duration, float tickInterval, int stacks, ICaster source)
     {
-        this.RemainingDuration = duration;
-        this.TickInterval = tickInterval;
+        Definition = definition;
+        RemainingDuration = duration;
+        TickInterval = tickInterval;
         this.stacks = stacks;
         this.source = source;
-        this.TimeUntilNextTick = tickInterval;
+        TimeUntilNextTick = tickInterval;
     }
     public void Tick(float deltaTime, IAbilityTarget target)
     {

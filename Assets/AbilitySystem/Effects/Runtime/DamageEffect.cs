@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public struct DamageEffect : IAbilityEffect
+public class DamageEffect : IAbilityEffect
 {
     public float DamageAmount;
     public readonly ICaster Source;
