@@ -1,14 +1,18 @@
 using UnityEngine;
+using AbilitySystem.Core;
 
-[CreateAssetMenu(fileName = "DOTEffectDefinition", menuName = "Ability System/Effects/DOTEffectDefinition")]
-public class DOTEffectDefinition : AbilityEffectDefinition
+namespace AbilitySystem.Effects
 {
-    public float damageAmount;
-    public float duration;
-    public float tickInterval;
-
-    public override IAbilityEffect CreateEffect(ICaster source)
+    [CreateAssetMenu(fileName = "DOTEffectDefinition", menuName = "Ability System/Effects/DOTEffectDefinition")]
+    public class DOTEffectDefinition : AbilityEffectDefinition
     {
-        return new DOTEffect(this, damageAmount, duration, tickInterval, source);
+        public float damageAmount;
+        public float duration;
+        public float tickInterval;
+
+        public override IAbilityEffect CreateEffect(ICaster source)
+        {
+            return new DOTEffect(this, damageAmount, duration, tickInterval, source);
+        }
     }
 }

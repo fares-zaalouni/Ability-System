@@ -1,6 +1,10 @@
 using UnityEngine;
+using AbilitySystem.Core;
 
-public abstract class AbilityEffectDefinition : ScriptableObject
+namespace AbilitySystem.Effects
 {
-    public abstract IAbilityEffect CreateEffect(ICaster source);
+    public abstract class AbilityEffectDefinition : ScriptableObject
+    {
+        public abstract IAbilityEffect CreateEffect(ICaster source);
+    }
 }

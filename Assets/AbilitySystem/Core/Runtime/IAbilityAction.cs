@@ -1,4 +1,7 @@
-public interface IAbilityAction
+namespace AbilitySystem.Core
 {
-    void Execute(AbilityContext context, AbilityRunner runner);
+    public interface IAbilityAction
+    {
+        void Execute(AbilityContext context, AbilityRunner runner);
+    }
 }

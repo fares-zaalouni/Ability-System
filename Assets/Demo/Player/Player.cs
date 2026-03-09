@@ -1,45 +1,60 @@
 using System.Collections.Generic;
 using System.Linq;
+using AbilitySystem.Core;
+using AbilitySystem.Resources;
+using AbilitySystem.Effects;
+using AbilitySystem.Targeting;
 using UnityEngine;
+using AbilitySystem;
 
 public class Player : MonoBehaviour, ICaster, IAbilityTarget
 {
+    [SerializeField] private List<ResourceDefinition> _resourceDefinitions = new List<ResourceDefinition>();
+    [SerializeField] private List<LabeledAbility> _abilityDefinitions = new List<LabeledAbility>();
     private Dictionary<string, IResource> _resources = new Dictionary<string, IResource>();
-    private Dictionary<string, AbilityInstance> _abilities = new Dictionary<string, AbilityInstance>();
-    [SerializeField] private FireBall _fireBallPrefab;
-    private FireBall _fireBallInstance;
-    bool casted = false;
+    private Dictionary<string, AbilityDefinition> _abilities = new Dictionary<string, AbilityDefinition>();
+    bool _casted = false;
 
     void Awake()
     {
-        AddResource(new Mana(100f));
-        _fireBallInstance = Instantiate(_fireBallPrefab);
-        _fireBallInstance.Initialize(this);
+        foreach (var resourceDef in _resourceDefinitions)
+        {
+            var runtimeResource = resourceDef.CreateRuntimeResource();
+            _resources.Add(runtimeResource.Name, runtimeResource);
+            foreach(var resource in _resources.Values)
+            {
+                Debug.Log($"Initialized resource: {resource.Name} with MaxAmount: {resource.MaxAmount}");
+            }
+        }
+        foreach (var labeledAbility in _abilityDefinitions)
+        {
+            _abilities.Add(labeledAbility.Label, labeledAbility.Definition);
+        }
     }
 
     void Update()
     {
-        if(!casted)
+        if (!_casted)
         {
-            _fireBallInstance.CastFireBall();
-            casted = true;
-        }
-    }
-    
-    private void AddResource(IResource resource)
-    {
-        if (!_resources.ContainsKey(resource.ResourceName.ToLower()))
-        {
-            _resources.Add(resource.ResourceName.ToLower(), resource);
+
+            Debug.Log("Attempting to cast Fireball");
+            if (_abilities.TryGetValue("fireball", out var abilityDef))
+            {
+                var abilityInstance = new AbilityInstance(abilityDef, this);
+                abilityInstance.Cast();
+            }
+
+            _casted = true;
         }
     }
 
     public bool CanConsumeCost(Cost cost)
     {
-        if (_resources.TryGetValue(cost.resourceName.ToLower(), out var resource))
+        if (_resources.TryGetValue(cost.resourceName, out var resource))
         {
             return resource.CanConsume(cost.amount);
         }
+        Debug.Log("Resource not found: " + cost.resourceName);
         return false;
     }
 
@@ -52,7 +67,7 @@ public class Player : MonoBehaviour, ICaster, IAbilityTarget
     {
         if (CanConsumeCost(cost))
         {
-            _resources[cost.resourceName.ToLower()].Consume(cost.amount);
+            _resources[cost.resourceName].Consume(cost.amount);
         }
     }
 
@@ -62,7 +77,7 @@ public class Player : MonoBehaviour, ICaster, IAbilityTarget
         Debug.Log($"Resource before:");
         foreach (var resource in _resources.Values)
         {
-            Debug.Log($"- {resource.ResourceName}: {resource.ResourceAmount}");
+            Debug.Log($"- {resource.Name}: {resource.MaxAmount}");
         }
         if (CanConsumeCost(costs))
         {
@@ -75,13 +90,8 @@ public class Player : MonoBehaviour, ICaster, IAbilityTarget
         Debug.Log($"Finished consuming costs. Current Resources:");
         foreach (var resource in _resources.Values)
         {
-            Debug.Log($"- {resource.ResourceName}: {resource.ResourceAmount}");
+            Debug.Log($"- {resource.Name}: {resource.MaxAmount}");
         }
-    }
-    public void AddAbility(AbilityDefinition ability)
-    {
-        AbilityInstance instance = new AbilityInstance(ability, this);
-        _abilities.Add(ability.abilityName.ToLower(), instance);
     }
 
     public bool IsTargetable()
@@ -97,5 +107,11 @@ public class Player : MonoBehaviour, ICaster, IAbilityTarget
     public void ApplyEffect(IAbilityEffect effect)
     {
         throw new System.NotImplementedException();
+    }
+
+    public bool TryGetResource(string resourceName, out IResource resource)
+    {
+        Debug.Log($"Trying to get resource: {resourceName}");
+        return _resources.TryGetValue(resourceName, out resource);
     }
 }

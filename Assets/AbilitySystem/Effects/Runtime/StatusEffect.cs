@@ -1,41 +1,45 @@
-
 using UnityEngine;
+using AbilitySystem.Targeting;
+using AbilitySystem.Core;
 
-public abstract class StatusEffect
+namespace AbilitySystem.Effects
 {
-    public AbilityEffectDefinition Definition { get; private set; }
-    protected ICaster source;
-    public float TickInterval { get; private set; }
-    public float RemainingDuration { get; private set; }
-    public float TimeUntilNextTick { get; private set; }
-    protected int stacks;
-
-
-    public StatusEffect(AbilityEffectDefinition definition, float duration, float tickInterval, int stacks, ICaster source)
+    public abstract class StatusEffect
     {
-        Definition = definition;
-        RemainingDuration = duration;
-        TickInterval = tickInterval;
-        this.stacks = stacks;
-        this.source = source;
-        TimeUntilNextTick = tickInterval;
-    }
-    public void Tick(float deltaTime, IAbilityTarget target)
-    {
-        RemainingDuration -= deltaTime;
-        TimeUntilNextTick -= deltaTime;
+        public AbilityEffectDefinition Definition { get; private set; }
+        protected ICaster source;
+        public float TickInterval { get; private set; }
+        public float RemainingDuration { get; private set; }
+        public float TimeUntilNextTick { get; private set; }
+        protected int stacks;
 
-        // Check if DoT/Buff should trigger this frame
-        if (TimeUntilNextTick <= 0f)
+
+        public StatusEffect(AbilityEffectDefinition definition, float duration, float tickInterval, int stacks, ICaster source)
         {
-            Debug.Log($"Ticking effect {Definition} on {target}. Remaining duration: {RemainingDuration}");
-            ApplyTick(target);
-            TimeUntilNextTick += TickInterval; // Reset tick timer
+            Definition = definition;
+            RemainingDuration = duration;
+            TickInterval = tickInterval;
+            this.stacks = stacks;
+            this.source = source;
+            TimeUntilNextTick = tickInterval;
         }
+        public void Tick(float deltaTime, IAbilityTarget target)
+        {
+            RemainingDuration -= deltaTime;
+            TimeUntilNextTick -= deltaTime;
+
+            // Check if DoT/Buff should trigger this frame
+            if (TimeUntilNextTick <= 0f)
+            {
+                Debug.Log($"Ticking effect {Definition} on {target}. Remaining duration: {RemainingDuration}");
+                ApplyTick(target);
+                TimeUntilNextTick += TickInterval; // Reset tick timer
+            }
+        }
+
+        public abstract void ApplyTick(IAbilityTarget target);
+        
+        public bool IsExpired => RemainingDuration <= 0f;
+
     }
-
-    public abstract void ApplyTick(IAbilityTarget target);
-    
-    public bool IsExpired => RemainingDuration <= 0f;
-
 }

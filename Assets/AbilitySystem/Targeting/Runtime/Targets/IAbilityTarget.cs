@@ -1,6 +1,7 @@
 using System;
+using AbilitySystem.Effects;
 
-namespace AbilitySystem.Targeting.Targets
+namespace AbilitySystem.Targeting
 {
     public interface IAbilityTarget
     {

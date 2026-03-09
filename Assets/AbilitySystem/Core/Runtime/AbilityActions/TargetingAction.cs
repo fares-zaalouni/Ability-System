@@ -1,18 +1,22 @@
 using System.Collections.Generic;
+using AbilitySystem.Targeting;
 
-public class TargetingAction : IAbilityAction
+namespace AbilitySystem.Core
 {
-    private ITargetingStrategy _targetingStrategy;
-
-    public TargetingAction(ITargetingStrategy targetingStrategy)
+    public class TargetingAction : IAbilityAction
     {
-        _targetingStrategy = targetingStrategy;
-    }
+        private ITargetingStrategy _targetingStrategy;
 
-    public void Execute(AbilityContext context, AbilityRunner runner)
-    {
-        List<IAbilityTarget> targets = _targetingStrategy.GetTargets(context);
-        context.SetTargets(targets);
-        runner.Next();
+        public TargetingAction(ITargetingStrategy targetingStrategy)
+        {
+            _targetingStrategy = targetingStrategy;
+        }
+
+        public void Execute(AbilityContext context, AbilityRunner runner)
+        {
+            List<IAbilityTarget> targets = _targetingStrategy.GetTargets(context);
+            context.SetTargets(targets);
+            runner.Next();
+        }
     }
 }

@@ -1,12 +1,16 @@
+using AbilitySystem.Core;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "DamageEffectDefinition", menuName = "Ability System/Effects/DamageEffectDefinition")]
-public class DamageEffectDefinition : AbilityEffectDefinition
+namespace AbilitySystem.Effects
 {
-    public float damageAmount;
-
-    public override IAbilityEffect CreateEffect(ICaster source)
+    [CreateAssetMenu(fileName = "DamageEffectDefinition", menuName = "Ability System/Effects/DamageEffectDefinition")]
+    public class DamageEffectDefinition : AbilityEffectDefinition
     {
-        return new DamageEffect(damageAmount, source);
+        public float damageAmount;
+
+        public override IAbilityEffect CreateEffect(ICaster source)
+        {
+            return new DamageEffect(damageAmount, source);
+        }
     }
 }

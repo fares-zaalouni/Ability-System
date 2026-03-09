@@ -1,34 +1,36 @@
-using System;
 using System.Collections.Generic;
-using UnityEditor.Rendering.LookDev;
 using UnityEngine;
+using AbilitySystem.Core;
 
-public class AOECircleStrategy : ITargetingStrategy
+namespace AbilitySystem.Targeting
 {
-    private float _radius;
-    public AOECircleStrategy(float radius)
+    public class AOECircleStrategy : ITargetingStrategy
     {
-        _radius = radius;
-    }
-    public List<IAbilityTarget> GetTargets(AbilityContext context)
-    {
-        if(!context.TryGet(ContextKeys.AOECenter, out Vector3 center))
+        private float _radius;
+        public AOECircleStrategy(float radius)
         {
-            Debug.LogError("AOECircleStrategy requires an AOECenter in the context.");
-            return new List<IAbilityTarget>();
+            _radius = radius;
         }
-
-        Collider[] colliders = Physics.OverlapSphere(center, _radius);
-        List<IAbilityTarget> targets = new List<IAbilityTarget>();
-        foreach (Collider collider in colliders)
+        public List<IAbilityTarget> GetTargets(AbilityContext context)
         {
-            IAbilityTarget target = collider.GetComponent<IAbilityTarget>();
-            Debug.Log($"Checking collider {collider.name} for IAbilityTarget. Found: {target != null}");
-            if (target != null && target.IsTargetable())
+            if(!context.TryGet(ContextKeys.AOECenter, out Vector3 center))
             {
-                targets.Add(target);
+                Debug.LogError("AOECircleStrategy requires an AOECenter in the context.");
+                return new List<IAbilityTarget>();
             }
+
+            Collider[] colliders = Physics.OverlapSphere(center, _radius);
+            List<IAbilityTarget> targets = new List<IAbilityTarget>();
+            foreach (Collider collider in colliders)
+            {
+                IAbilityTarget target = collider.GetComponent<IAbilityTarget>();
+                Debug.Log($"Checking collider {collider.name} for IAbilityTarget. Found: {target != null}");
+                if (target != null && target.IsTargetable())
+                {
+                    targets.Add(target);
+                }
+            }
+            return targets;
         }
-        return targets;
     }
 }

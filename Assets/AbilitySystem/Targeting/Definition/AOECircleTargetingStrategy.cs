@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace AbilitySystem.Targeting.Definition
+namespace AbilitySystem.Targeting
 {
     [CreateAssetMenu(fileName = "AOECircleTargetingStrategy", menuName = "Ability System/Targeting Strategies/AOECircleTargetingStrategy")]
     public class AOECircleTargetingStrategy : TargetingStrategyDefinition

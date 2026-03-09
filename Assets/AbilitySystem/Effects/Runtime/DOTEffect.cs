@@ -1,26 +1,31 @@
 using UnityEngine;
+using AbilitySystem.Targeting;
+using AbilitySystem.Core;
 
-public class DOTEffect : StatusEffect, IAbilityEffect
+namespace AbilitySystem.Effects
 {
-    public float damagePerTick;
-    
-    public DOTEffect( AbilityEffectDefinition definition, float damagePerTick, float duration, float tickInterval, ICaster source) 
-    : base(definition, duration, tickInterval, 1, source)
+    public class DOTEffect : StatusEffect, IAbilityEffect
     {
-        this.damagePerTick = damagePerTick;
-    }
-    public void ApplyTo(IAbilityTarget target)
-    {
-        if (target is IStatusEffectReceiver statusEffectReceiver)
+        public float damagePerTick;
+        
+        public DOTEffect( AbilityEffectDefinition definition, float damagePerTick, float duration, float tickInterval, ICaster source) 
+        : base(definition, duration, tickInterval, 1, source)
         {
-            statusEffectReceiver.ApplyStatusEffectTo(this, source);
+            this.damagePerTick = damagePerTick;
         }
-    }
-    public override void ApplyTick(IAbilityTarget target)
-    {
-        if (target is IDamageable damageable)
+        public void ApplyTo(IAbilityTarget target)
         {
-            damageable.TakeDamage(damagePerTick, source);
+            if (target is IStatusEffectReceiver statusEffectReceiver)
+            {
+                statusEffectReceiver.ApplyStatusEffectTo(this, source);
+            }
+        }
+        public override void ApplyTick(IAbilityTarget target)
+        {
+            if (target is IDamageable damageable)
+            {
+                damageable.TakeDamage(damagePerTick, source);
+            }
         }
     }
 }

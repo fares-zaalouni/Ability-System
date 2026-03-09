@@ -1,11 +1,15 @@
 using UnityEngine;
+using AbilitySystem.Targeting;
 
-[CreateAssetMenu(fileName = "TargetingAction", menuName = "Ability System/Ability Actions/TargetingAction")]
-public class TargetingActionDefinition : AbilityActionDefinition
+namespace AbilitySystem.Core
 {
-    [SerializeField] TargetingStrategyDefinition targetingStrategy;
-    public override IAbilityAction CreateRuntimeAction()
+    [CreateAssetMenu(fileName = "TargetingAction", menuName = "Ability System/Ability Actions/TargetingAction")]
+    public class TargetingActionDefinition : AbilityActionDefinition
     {
-        return new TargetingAction(targetingStrategy.CreateRuntimeStrategy());
+        [SerializeField] TargetingStrategyDefinition targetingStrategy;
+        public override IAbilityAction CreateRuntimeAction()
+        {
+            return new TargetingAction(targetingStrategy.CreateRuntimeStrategy());
+        }
     }
 }

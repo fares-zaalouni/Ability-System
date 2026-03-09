@@ -1,27 +1,27 @@
-
 using UnityEngine;
+using AbilitySystem.Effects;
+using AbilitySystem.Targeting;
 
-public class ApplyEffectAction : IAbilityAction
+namespace AbilitySystem.Core
 {
-    private AbilityEffectDefinition _abilityEffectDefinition;
-    private IAbilityEffect _abilityEffect;
-
-    public ApplyEffectAction(AbilityEffectDefinition abilityEffectDefinition)
+    public class ApplyEffectAction : IAbilityAction
     {
-        _abilityEffectDefinition = abilityEffectDefinition;
-    }
+        private AbilityEffectDefinition _abilityEffectDefinition;
 
-    public void Execute(AbilityContext context, AbilityRunner runner)
-    {
-        if(_abilityEffect == null)
+        public ApplyEffectAction(AbilityEffectDefinition abilityEffectDefinition)
         {
-            _abilityEffect = _abilityEffectDefinition.CreateEffect(context.Caster);
+            _abilityEffectDefinition = abilityEffectDefinition;
         }
-        
-        foreach (IAbilityTarget target in context.Targets)
+
+        public void Execute(AbilityContext context, AbilityRunner runner)
         {
-            _abilityEffect.ApplyTo(target);
+            
+            foreach (IAbilityTarget target in context.Targets)
+            {
+                Debug.Log("Applying effect: " + _abilityEffectDefinition.name + " to target: " + target);
+                _abilityEffectDefinition.CreateEffect(context.Caster).ApplyTo(target);
+            }
+            runner.Next();
         }
-        runner.Next();
     }
 }

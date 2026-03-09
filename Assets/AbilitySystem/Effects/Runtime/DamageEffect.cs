@@ -1,23 +1,28 @@
-using System;
-using UnityEngine;
 
-public class DamageEffect : IAbilityEffect
+using AbilitySystem.Core;
+using AbilitySystem.Targeting;
+
+
+namespace AbilitySystem.Effects
 {
-    public float DamageAmount;
-    public readonly ICaster Source;
+    public class DamageEffect : IAbilityEffect
+    {
+        private float _damageAmount;
+        private readonly ICaster _source;
 
 
-    public DamageEffect(float damageAmount, ICaster source)
-    {
-        this.DamageAmount = damageAmount;
-        this.Source = source;
-    }
-    public void ApplyTo(IAbilityTarget target)
-    {
-        if(target is IDamageable damageable)
+        public DamageEffect(float damageAmount, ICaster source)
         {
-            damageable.TakeDamage(DamageAmount, Source);
+            _damageAmount = damageAmount;
+            _source = source;
         }
-       
+        public void ApplyTo(IAbilityTarget target)
+        {
+            if(target is IDamageable damageable)
+            {
+                damageable.TakeDamage(_damageAmount, _source);
+            }
+           
+        }
     }
 }

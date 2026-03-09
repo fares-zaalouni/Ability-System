@@ -1,4 +1,7 @@
 using System;
+using AbilitySystem.Core;
+using AbilitySystem.Effects;
+using AbilitySystem.Targeting;
 using UnityEngine;
 
 public class Enemy : StatusEffectReceiver,
@@ -26,7 +29,6 @@ IDamageable
     }
     public void TakeDamage(float amount, ICaster source = null)
     {
-        Debug.Log($"Enemy took {amount} damage from {source}");
         _health.TakeDamage(amount);
     }
 

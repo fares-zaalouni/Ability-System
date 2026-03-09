@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
+using AbilitySystem.Effects;
+using AbilitySystem.Core;
 
-namespace AbilitySystem.Targeting.Targets
+namespace AbilitySystem.Targeting
 {
     public class StatusEffectReceiver : MonoBehaviour, IStatusEffectReceiver
     {

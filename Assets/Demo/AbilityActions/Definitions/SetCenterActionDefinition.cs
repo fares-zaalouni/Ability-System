@@ -1,5 +1,6 @@
 
 
+using AbilitySystem.Core;
 using UnityEngine;
 [CreateAssetMenu(fileName = "SetCenterAction", menuName = "Ability System/Ability Actions/SetCenterAction")]
 public class SetCenterActionDefinition : AbilityActionDefinition

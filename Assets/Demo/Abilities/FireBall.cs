@@ -1,6 +1,7 @@
 
 using System;
 using System.Collections.Generic;
+using AbilitySystem.Core;
 using UnityEngine;
 
 public class FireBall: MonoBehaviour

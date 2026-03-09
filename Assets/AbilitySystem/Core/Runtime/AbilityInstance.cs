@@ -1,55 +1,64 @@
-
 using System.Collections.Generic;
 using UnityEngine;
+using AbilitySystem.Resources;
 
-public class AbilityInstance
+namespace AbilitySystem.Core
 {
-    private AbilityDefinition _definition;
-    private List<IAbilityAction> _actions; 
-    private AbilityRunner _runner;
-    private ICaster _caster;
-    private float _cooldownRemaining;
-    public AbilityInstance(AbilityDefinition definition, ICaster caster)
+    public class AbilityInstance
     {
-        _actions = new List<IAbilityAction>();
-        AbilityContext context = new AbilityContext(caster);
-        foreach (var actionDef in definition.actionDefinitions)
+        private AbilityDefinition _definition;
+        private List<Cost> _costs;
+        private List<IAbilityAction> _actions; 
+        private AbilityRunner _runner;
+        private ICaster _caster;
+        private float _cooldownRemaining;
+        public AbilityInstance(AbilityDefinition definition, ICaster caster)
         {
-            _actions.Add(actionDef.CreateRuntimeAction());
-        }
-        _runner = new AbilityRunner(_actions, context);
-        _definition = definition;
-        _caster = caster;
-        _cooldownRemaining = 0f;
-    }
-
-    public bool IsOnCooldown()
-    {
-        return _cooldownRemaining > 0f;
-    }
-
-    public void Cast()
-    {
-        if (!IsOnCooldown() && _caster.CanConsumeCost(_definition.costs))
-        {
-            Debug.Log($"Casting {_definition.abilityName}");
-            _caster.ConsumeCost(_definition.costs);
-            _cooldownRemaining = _definition.cooldown;
-            //List<IAbilityTarget> targets = TargetingStrategy.GetTargets();
-
-            /*Debug.Log($"Found {targets.Count} targets for {_definition.abilityName}");*/
-            /*foreach (var target in targets)
+            _costs = new List<Cost>();
+            foreach (var costDef in definition.costs)
             {
-                foreach (var effectDefinition in _definition.effectDefinitions)
+                _costs.Add(costDef.CreateRuntimeCost());
+            }
+            _actions = new List<IAbilityAction>();
+            AbilityContext context = new AbilityContext(caster);
+            foreach (var actionDef in definition.actionDefinitions)
+            {
+                _actions.Add(actionDef.CreateRuntimeAction());
+            }
+            _runner = new AbilityRunner(_actions, context);
+            _definition = definition;
+            _caster = caster;
+            _cooldownRemaining = 0f;
+        }
+
+        public bool IsOnCooldown()
+        {
+            return _cooldownRemaining > 0f;
+        }
+
+        public void Cast()
+        {
+            if (!IsOnCooldown() && _caster.CanConsumeCost(_costs))
+            {
+                Debug.Log($"Casting {_definition.abilityName}");
+                _caster.ConsumeCost(_costs);
+                _cooldownRemaining = _definition.cooldown;
+                //List<IAbilityTarget> targets = TargetingStrategy.GetTargets();
+
+                /*Debug.Log($"Found {targets.Count} targets for {_definition.abilityName}");*/
+                /*foreach (var target in targets)
                 {
-                    var effect = effectDefinition.CreateEffect(_caster);
-                    if (target.CanApplyEffect(effect))
+                    foreach (var effectDefinition in _definition.effectDefinitions)
                     {
-                        effect.ApplyTo(target);
+                        var effect = effectDefinition.CreateEffect(_caster);
+                        if (target.CanApplyEffect(effect))
+                        {
+                            effect.ApplyTo(target);
+                        }
                     }
-                }
-            }*/
-            _runner.Next();
+                }*/
+                _runner.Next();
+            }
         }
     }
 }

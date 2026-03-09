@@ -1,4 +1,8 @@
-namespace AbilitySystem.Targeting.Targets
+
+
+using AbilitySystem.Core;
+
+namespace AbilitySystem.Targeting
 {
     public interface IDamageable
     {

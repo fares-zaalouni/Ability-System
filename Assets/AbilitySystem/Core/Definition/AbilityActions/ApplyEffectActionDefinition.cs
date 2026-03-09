@@ -1,11 +1,15 @@
+using AbilitySystem.Effects;
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "ApplyEffectAction", menuName = "Ability System/Ability Actions/ApplyEffectAction")]
-public class ApplyEffectActionDefinition : AbilityActionDefinition
+namespace AbilitySystem.Core
 {
-    [SerializeField] AbilityEffectDefinition abilityEffectDefinition;
-    public override IAbilityAction CreateRuntimeAction()
+    [CreateAssetMenu(fileName = "ApplyEffectAction", menuName = "Ability System/Ability Actions/ApplyEffectAction")]
+    public class ApplyEffectActionDefinition : AbilityActionDefinition
     {
-        return new ApplyEffectAction(abilityEffectDefinition);
+        [SerializeField] AbilityEffectDefinition abilityEffectDefinition;
+        public override IAbilityAction CreateRuntimeAction()
+        {
+            return new ApplyEffectAction(abilityEffectDefinition);
+        }
     }
 }

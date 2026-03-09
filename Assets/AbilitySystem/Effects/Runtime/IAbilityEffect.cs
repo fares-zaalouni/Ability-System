@@ -1,6 +1,10 @@
 using System;
+using AbilitySystem.Targeting;
 
-public interface IAbilityEffect
+namespace AbilitySystem.Effects
 {
-    void ApplyTo(IAbilityTarget target);
+    public interface IAbilityEffect
+    {
+        void ApplyTo(IAbilityTarget target);
+    }
 }

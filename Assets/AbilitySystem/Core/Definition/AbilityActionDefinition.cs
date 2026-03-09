@@ -1,7 +1,9 @@
-
 using UnityEngine;
 
-public abstract class AbilityActionDefinition : ScriptableObject
+namespace AbilitySystem.Core
 {
-    public abstract IAbilityAction CreateRuntimeAction();
+    public abstract class AbilityActionDefinition : ScriptableObject
+    {
+        public abstract IAbilityAction CreateRuntimeAction();
+    }
 }

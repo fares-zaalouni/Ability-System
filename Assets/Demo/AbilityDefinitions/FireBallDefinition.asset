@@ -15,10 +15,8 @@ MonoBehaviour:
   abilityName: fireball
   cooldown: 20
   costs:
-  - resourceName: mana
-    amount: 50
+  - {fileID: 11400000, guid: 0917993aecf141842b014f4c702412fb, type: 2}
   actionDefinitions:
   - {fileID: 11400000, guid: a4a28dbe25cba6348a3ef72e6994b273, type: 2}
   - {fileID: 11400000, guid: e141101fb2c242e48a34a0d6f8674e2c, type: 2}
-  - {fileID: 11400000, guid: b08404f93aed79c4c88fe9a263679b7d, type: 2}
-  - {fileID: 11400000, guid: 3179524c2ba8d744aa3cd1494e25ce78, type: 2}
+  - {fileID: 11400000, guid: 998d30c84dc44bb44a07a994e32e1936, type: 2}

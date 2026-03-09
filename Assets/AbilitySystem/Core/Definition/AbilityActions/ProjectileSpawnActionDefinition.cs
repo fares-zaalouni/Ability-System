@@ -1,13 +1,17 @@
 using UnityEngine;
+using AbilitySystem.Projectiles;
 
-[CreateAssetMenu(fileName = "SpawnProjectileAction", menuName = "Ability System/Ability Actions/SpawnProjectileAction")]
-
-
-public class ProjectileSpawnActionDefinition : AbilityActionDefinition
+namespace AbilitySystem.Core
 {
-    [SerializeField] Projectile projectilePrefab;
-    public override IAbilityAction CreateRuntimeAction()
+    [CreateAssetMenu(fileName = "SpawnProjectileAction", menuName = "Ability System/Ability Actions/SpawnProjectileAction")]
+
+
+    public class ProjectileSpawnActionDefinition : AbilityActionDefinition
     {
-        return new SpawnProjectileAction(projectilePrefab);
+        [SerializeField] Projectile projectilePrefab;
+        public override IAbilityAction CreateRuntimeAction()
+        {
+            return new SpawnProjectileAction(projectilePrefab);
+        }
     }
 }

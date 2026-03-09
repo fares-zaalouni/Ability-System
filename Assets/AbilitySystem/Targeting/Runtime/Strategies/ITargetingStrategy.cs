@@ -1,6 +1,10 @@
 using System.Collections.Generic;
+using AbilitySystem.Core;
 
-public interface ITargetingStrategy
+namespace AbilitySystem.Targeting
 {
-    public  List<IAbilityTarget> GetTargets(AbilityContext context);
+    public interface ITargetingStrategy
+    {
+        public  List<IAbilityTarget> GetTargets(AbilityContext context);
+    }
 }
