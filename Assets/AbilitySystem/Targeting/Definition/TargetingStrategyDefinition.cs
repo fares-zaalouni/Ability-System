@@ -1,6 +1,9 @@
 using UnityEngine;
 
-public abstract class TargetingStrategyDefinition : ScriptableObject
+namespace AbilitySystem.Targeting.Definition
 {
-    public abstract ITargetingStrategy CreateRuntimeStrategy();
+    public abstract class TargetingStrategyDefinition : ScriptableObject
+    {
+        public abstract ITargetingStrategy CreateRuntimeStrategy();
+    }
 }

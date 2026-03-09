@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEditor.Rendering.LookDev;
 using UnityEngine;
 
 public class AOECircleStrategy : ITargetingStrategy
@@ -11,7 +12,12 @@ public class AOECircleStrategy : ITargetingStrategy
     }
     public List<IAbilityTarget> GetTargets(AbilityContext context)
     {
-        Vector3 center = context.TargetPoint;
+        if(!context.TryGet(ContextKeys.AOECenter, out Vector3 center))
+        {
+            Debug.LogError("AOECircleStrategy requires an AOECenter in the context.");
+            return new List<IAbilityTarget>();
+        }
+
         Collider[] colliders = Physics.OverlapSphere(center, _radius);
         List<IAbilityTarget> targets = new List<IAbilityTarget>();
         foreach (Collider collider in colliders)

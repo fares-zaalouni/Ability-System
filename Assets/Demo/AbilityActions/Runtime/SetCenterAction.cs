@@ -11,7 +11,7 @@ public class SetCenterAction : IAbilityAction
 
     public void Execute(AbilityContext context, AbilityRunner runner)
     {
-        context.TargetPoint = _center;
+        context.Set(ContextKeys.AOECenter, _center);
         runner.Next();
     }
 }

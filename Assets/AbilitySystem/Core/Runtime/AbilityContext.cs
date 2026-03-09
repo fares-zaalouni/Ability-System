@@ -4,7 +4,6 @@ using UnityEngine;
 public class AbilityContext
 {
     public ICaster Caster { get; private set; }
-    public Vector3 TargetPoint { get; set; }
     public List<IAbilityTarget> Targets { get; private set; }
     private readonly Dictionary<string, object> _blackboard = new();
     public AbilityContext(ICaster caster)

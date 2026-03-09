@@ -1,4 +1,7 @@
-public interface IDamageable
+namespace AbilitySystem.Targeting.Targets
 {
-    void TakeDamage(float amount, ICaster source = null);
+    public interface IDamageable
+    {
+        void TakeDamage(float amount, ICaster source = null);
+    }
 }

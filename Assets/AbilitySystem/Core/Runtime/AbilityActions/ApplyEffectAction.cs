@@ -5,7 +5,7 @@ public class ApplyEffectAction : IAbilityAction
 {
     private AbilityEffectDefinition _abilityEffectDefinition;
     private IAbilityEffect _abilityEffect;
-    
+
     public ApplyEffectAction(AbilityEffectDefinition abilityEffectDefinition)
     {
         _abilityEffectDefinition = abilityEffectDefinition;

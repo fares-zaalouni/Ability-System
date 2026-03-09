@@ -1,12 +1,15 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "AOECircleTargetingStrategy", menuName = "Ability System/Targeting Strategies/AOECircleTargetingStrategy")]
-public class AOECircleTargetingStrategy : TargetingStrategyDefinition
+namespace AbilitySystem.Targeting.Definition
 {
-    [SerializeField] float radius;
-
-    public override ITargetingStrategy CreateRuntimeStrategy()
+    [CreateAssetMenu(fileName = "AOECircleTargetingStrategy", menuName = "Ability System/Targeting Strategies/AOECircleTargetingStrategy")]
+    public class AOECircleTargetingStrategy : TargetingStrategyDefinition
     {
-        return new AOECircleStrategy(radius);
+        [SerializeField] float radius;
+
+        public override ITargetingStrategy CreateRuntimeStrategy()
+        {
+            return new AOECircleStrategy(radius);
+        }
     }
 }

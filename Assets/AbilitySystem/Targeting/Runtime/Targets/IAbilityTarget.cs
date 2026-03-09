@@ -1,8 +1,10 @@
-
 using System;
 
-public interface IAbilityTarget
+namespace AbilitySystem.Targeting.Targets
 {
-    bool IsTargetable();
-    bool CanApplyEffect(IAbilityEffect effect);
+    public interface IAbilityTarget
+    {
+        bool IsTargetable();
+        bool CanApplyEffect(IAbilityEffect effect);
+    }
 }
