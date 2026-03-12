@@ -8,7 +8,7 @@ namespace AbilitySystem.Effects
     {
         public float damageAmount;
 
-        public override IAbilityEffect CreateEffect(ICaster source)
+        public override IAbilityEffect CreateEffect(IResourceBearer source)
         {
             return new DamageEffect(damageAmount, source);
         }

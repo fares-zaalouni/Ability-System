@@ -18,7 +18,6 @@ namespace AbilitySystem.Core
             
             foreach (IAbilityTarget target in context.Targets)
             {
-                Debug.Log("Applying effect: " + _abilityEffectDefinition.name + " to target: " + target);
                 _abilityEffectDefinition.CreateEffect(context.Caster).ApplyTo(target);
             }
             runner.Next();

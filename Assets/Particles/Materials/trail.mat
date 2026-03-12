@@ -21,19 +21,22 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: trail
-  m_Shader: {fileID: -6465566751694194690, guid: b1e59b6ec05363846a5df3d238d775f7, type: 3}
-  m_Parent: {fileID: 2100000, guid: c39ab4c8f8d611d4189e9cbc8cea4ecf, type: 2}
+  m_Shader: {fileID: -6465566751694194690, guid: eb532d23e19e2364694dce6a582e7cad, type: 3}
+  m_Parent: {fileID: 2100000, guid: 228a2e2ca23f5be45a59f45a3f4b12a1, type: 2}
   m_ModifiedSerializedProperties: 2
-  m_ValidKeywords: []
-  m_InvalidKeywords:
+  m_ValidKeywords:
+  - _ALPHATEST_ON
   - _SURFACE_TYPE_TRANSPARENT
+  m_InvalidKeywords: []
   m_LightmapFlags: 0
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
-  stringTagMap: {}
+  stringTagMap:
+    RenderType: Transparent
   disabledShaderPasses:
   - MOTIONVECTORS
+  - DepthOnly
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3

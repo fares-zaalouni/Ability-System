@@ -6,16 +6,33 @@ using AbilitySystem.Effects;
 using AbilitySystem.Targeting;
 using UnityEngine;
 using AbilitySystem;
+using System;
 
-public class Player : MonoBehaviour, ICaster, IAbilityTarget
+public class Player : MonoBehaviour, IResourceBearer, IAbilityTarget
 {
     [SerializeField] private List<ResourceDefinition> _resourceDefinitions = new List<ResourceDefinition>();
     [SerializeField] private List<LabeledAbility> _abilityDefinitions = new List<LabeledAbility>();
     private Dictionary<string, IResource> _resources = new Dictionary<string, IResource>();
-    private Dictionary<string, AbilityDefinition> _abilities = new Dictionary<string, AbilityDefinition>();
+    private Dictionary<string, AbilityInstance> _abilities = new Dictionary<string, AbilityInstance>();
     bool _casted = false;
+    WeakReference<AbilityCast> _currentCast;
 
     void Awake()
+    {
+        RegisterResources();
+        foreach (var labeledAbility in _abilityDefinitions)
+        {
+            AbilityInstance abilityInstance = new AbilityInstance(labeledAbility.Definition, this);
+            _abilities.Add(labeledAbility.Label, abilityInstance);
+            SignalBus.Subscribe(labeledAbility.Definition.CastCompleteSignal, 
+                (ctx) => Debug.Log($"Received cast complete signal for {labeledAbility.Label}"));
+            SignalBus.Subscribe(labeledAbility.Definition.CastCancelSignal, 
+                (ctx) => Debug.Log($"Received cast cancel signal for {labeledAbility.Label}"));
+            SignalBus.Subscribe(labeledAbility.Definition.CastInterruptSignal, 
+                (ctx) => Debug.Log($"Received cast interrupt signal for {labeledAbility.Label}"));
+        }
+    }
+    public void RegisterResources()
     {
         foreach (var resourceDef in _resourceDefinitions)
         {
@@ -26,25 +43,38 @@ public class Player : MonoBehaviour, ICaster, IAbilityTarget
                 Debug.Log($"Initialized resource: {resource.Name} with MaxAmount: {resource.MaxAmount}");
             }
         }
-        foreach (var labeledAbility in _abilityDefinitions)
-        {
-            _abilities.Add(labeledAbility.Label, labeledAbility.Definition);
-        }
     }
 
     void Update()
     {
-        if (!_casted)
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            if (_abilities.TryGetValue("fireball", out var abilityInstance))
+            {
+                Blackboard initialBlackboard = new Blackboard
+                {
+                    { ContextKeys.ProjectileLaunchDirection, transform.forward },
+                    { ContextKeys.ProjectileSpawnPoint, transform.position + transform.forward * 1.5f }
+                };
+                abilityInstance.Cast(out _currentCast, initialBlackboard);
+                if(_currentCast.TryGetTarget(out var cast))
+                {
+                    cast.OnCompleted += (ctx) => Debug.Log("Fireball cast completed!");
+                    cast.OnCancelled += (ctx) => Debug.Log("Fireball cast cancelled!");
+                    cast.OnInterrupted += (ctx) => Debug.Log("Fireball cast interrupted!");
+                }
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.F))
         {
 
-            Debug.Log("Attempting to cast Fireball");
-            if (_abilities.TryGetValue("fireball", out var abilityDef))
+            Debug.Log("Attempting to Interrupt Fireball");
+            
+            if(_currentCast.TryGetTarget(out var cast) && _currentCast != null)
             {
-                var abilityInstance = new AbilityInstance(abilityDef, this);
-                abilityInstance.Cast();
+                cast?.Interrupt();
             }
-
-            _casted = true;
+            
         }
     }
 

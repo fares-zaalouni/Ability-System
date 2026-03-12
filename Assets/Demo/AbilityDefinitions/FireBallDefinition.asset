@@ -12,11 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed9410be9cc68794f8f3639b2f974d91, type: 3}
   m_Name: FireBallDefinition
   m_EditorClassIdentifier: Assembly-CSharp::AbilityDefinition
-  abilityName: fireball
-  cooldown: 20
-  costs:
+  AbilityName: fireball
+  Cooldown: 20
+  Costs:
   - {fileID: 11400000, guid: 0917993aecf141842b014f4c702412fb, type: 2}
-  actionDefinitions:
+  ActionDefinitions:
   - {fileID: 11400000, guid: a4a28dbe25cba6348a3ef72e6994b273, type: 2}
   - {fileID: 11400000, guid: e141101fb2c242e48a34a0d6f8674e2c, type: 2}
-  - {fileID: 11400000, guid: 998d30c84dc44bb44a07a994e32e1936, type: 2}
+  - {fileID: 11400000, guid: 2926f9b31b0ebd0439b36144e1392aee, type: 2}
+  - {fileID: 11400000, guid: 7c6802eaaaf6a734d9e88e65e9addd9b, type: 2}
+  CastCompleteSignal: {fileID: 11400000, guid: fa097b0a61febfd45822780dfe91357b, type: 2}
+  CastCancelSignal: {fileID: 11400000, guid: 63249712e32f04c43b23fa762f43a6d8, type: 2}
+  CastInterruptSignal: {fileID: 11400000, guid: c7e4f563bb72c4646a69d962f0440ad7, type: 2}

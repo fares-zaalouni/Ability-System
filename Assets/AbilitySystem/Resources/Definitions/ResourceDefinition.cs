@@ -6,6 +6,8 @@ namespace AbilitySystem.Resources
     {
         [SerializeField] public string ResourceName;
         [SerializeField] protected float _maxAmount;
+        [SerializeField] protected float _regenAmount;
+
         public abstract IResource CreateRuntimeResource();
     }
 }

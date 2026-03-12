@@ -7,14 +7,14 @@ namespace AbilitySystem.Effects
     public abstract class StatusEffect
     {
         public AbilityEffectDefinition Definition { get; private set; }
-        protected ICaster source;
+        protected IResourceBearer source;
         public float TickInterval { get; private set; }
         public float RemainingDuration { get; private set; }
         public float TimeUntilNextTick { get; private set; }
         protected int stacks;
 
 
-        public StatusEffect(AbilityEffectDefinition definition, float duration, float tickInterval, int stacks, ICaster source)
+        public StatusEffect(AbilityEffectDefinition definition, float duration, float tickInterval, int stacks, IResourceBearer source)
         {
             Definition = definition;
             RemainingDuration = duration;

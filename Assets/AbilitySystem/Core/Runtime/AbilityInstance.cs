@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using AbilitySystem.Resources;
+using System;
 
 namespace AbilitySystem.Core
 {
@@ -8,24 +9,20 @@ namespace AbilitySystem.Core
     {
         private AbilityDefinition _definition;
         private List<Cost> _costs;
-        private List<IAbilityAction> _actions; 
-        private AbilityRunner _runner;
-        private ICaster _caster;
+        private List<AbilityCast> _casts; 
+        private IResourceBearer _caster;
         private float _cooldownRemaining;
-        public AbilityInstance(AbilityDefinition definition, ICaster caster)
+
+
+        public AbilityInstance(AbilityDefinition definition, IResourceBearer caster)
         {
             _costs = new List<Cost>();
-            foreach (var costDef in definition.costs)
+            _casts = new List<AbilityCast>();
+            foreach (var costDef in definition.Costs)
             {
                 _costs.Add(costDef.CreateRuntimeCost());
             }
-            _actions = new List<IAbilityAction>();
-            AbilityContext context = new AbilityContext(caster);
-            foreach (var actionDef in definition.actionDefinitions)
-            {
-                _actions.Add(actionDef.CreateRuntimeAction());
-            }
-            _runner = new AbilityRunner(_actions, context);
+
             _definition = definition;
             _caster = caster;
             _cooldownRemaining = 0f;
@@ -36,29 +33,24 @@ namespace AbilitySystem.Core
             return _cooldownRemaining > 0f;
         }
 
-        public void Cast()
+        public bool Cast(out WeakReference<AbilityCast> castRef, Blackboard blackboard = null)
         {
             if (!IsOnCooldown() && _caster.CanConsumeCost(_costs))
             {
-                Debug.Log($"Casting {_definition.abilityName}");
+                Debug.Log($"Casting {_definition.AbilityName}");
                 _caster.ConsumeCost(_costs);
-                _cooldownRemaining = _definition.cooldown;
-                //List<IAbilityTarget> targets = TargetingStrategy.GetTargets();
-
-                /*Debug.Log($"Found {targets.Count} targets for {_definition.abilityName}");*/
-                /*foreach (var target in targets)
-                {
-                    foreach (var effectDefinition in _definition.effectDefinitions)
-                    {
-                        var effect = effectDefinition.CreateEffect(_caster);
-                        if (target.CanApplyEffect(effect))
-                        {
-                            effect.ApplyTo(target);
-                        }
-                    }
-                }*/
-                _runner.Next();
+                //_cooldownRemaining = _definition.Cooldown;
+            
+                AbilityCast cast = new AbilityCast(_caster, _definition, blackboard);
+                
+                _casts.Add(cast);
+                cast.Execute();
+                castRef = new WeakReference<AbilityCast>(cast);
+                return true;
             }
+            castRef = null;
+            return false;
         }
+
     }
 }

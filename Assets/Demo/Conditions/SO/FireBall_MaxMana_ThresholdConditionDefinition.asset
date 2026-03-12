@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: FireBall_MaxMana_ThresholdConditionDefinition
   m_EditorClassIdentifier: Assembly-CSharp::AbilitySystem.Core.ResourceThresholdConditionDefinition
   _resourceDefinition: {fileID: 11400000, guid: 647c17ec548b11c409082c9c076dd5b7, type: 2}
-  _threshold: 120
+  _threshold: 60
   _valueType: 0

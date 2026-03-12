@@ -8,7 +8,7 @@ namespace AbilitySystem.Effects
     {
         public float damagePerTick;
         
-        public DOTEffect( AbilityEffectDefinition definition, float damagePerTick, float duration, float tickInterval, ICaster source) 
+        public DOTEffect( AbilityEffectDefinition definition, float damagePerTick, float duration, float tickInterval, IResourceBearer source) 
         : base(definition, duration, tickInterval, 1, source)
         {
             this.damagePerTick = damagePerTick;

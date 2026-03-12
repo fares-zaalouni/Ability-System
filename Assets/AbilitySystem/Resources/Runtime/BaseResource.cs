@@ -1,13 +1,16 @@
+
+using UnityEngine;
+
 namespace AbilitySystem.Resources
 {
-    public class ManaResource : IResource
+    public class BaseResource : IResource
     {
         public float MaxAmount { get; private set; }
         public float CurrentAmount {get; private set;} 
         public string Name {get; private set; }
         public float RegenAmount { get; private set; }
         
-        public ManaResource(string name, float maxAmount, float regenAmount)
+        public BaseResource(string name, float maxAmount, float regenAmount)
         {
             Name = name;
             MaxAmount = maxAmount;
@@ -23,7 +26,8 @@ namespace AbilitySystem.Resources
             }
             else
             {
-                throw new System.InvalidOperationException("Not enough mana to consume.");
+                //change later
+                Debug.Log($"Not enough {Name} to consume. Required: {amount}, Available: {CurrentAmount}");
             }
         }
 

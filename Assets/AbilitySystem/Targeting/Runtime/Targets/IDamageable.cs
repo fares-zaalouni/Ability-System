@@ -6,6 +6,6 @@ namespace AbilitySystem.Targeting
 {
     public interface IDamageable
     {
-        void TakeDamage(float amount, ICaster source = null);
+        void TakeDamage(float amount, IResourceBearer source = null);
     }
 }

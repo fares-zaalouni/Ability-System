@@ -10,6 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e27ef5a883cf4c346ac8190dc57af648, type: 3}
-  m_Name: FireBallTargeting
+  m_Name: Fireball_AOECircle
   m_EditorClassIdentifier: Assembly-CSharp::AOECircleTargetingStrategy
-  radius: 5
+  _targetLayerMask:
+    serializedVersion: 2
+    m_Bits: 64
+  _radius: 5

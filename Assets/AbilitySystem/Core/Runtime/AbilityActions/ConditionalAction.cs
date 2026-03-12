@@ -19,7 +19,9 @@ namespace AbilitySystem.Core
         {
             var branch = _condition.Evaluate(context) ? _trueActions : _falseActions;
             var subRunner = new AbilityRunner(branch, context);
-            subRunner.OnComplete += runner.Next;
+            subRunner.OnCompleted += runner.Next;
+            subRunner.OnCancelled += runner.Cancel;
+            subRunner.OnInterrupted += runner.Interrupt;
             subRunner.Next();
         }
     }

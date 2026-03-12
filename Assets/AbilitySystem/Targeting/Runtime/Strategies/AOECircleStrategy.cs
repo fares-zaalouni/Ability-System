@@ -7,9 +7,11 @@ namespace AbilitySystem.Targeting
     public class AOECircleStrategy : ITargetingStrategy
     {
         private float _radius;
-        public AOECircleStrategy(float radius)
+        private LayerMask _targetLayerMask;
+        public AOECircleStrategy(float radius, LayerMask targetLayerMask)
         {
             _radius = radius;
+            _targetLayerMask = targetLayerMask;
         }
         public List<IAbilityTarget> GetTargets(AbilityContext context)
         {
@@ -19,7 +21,7 @@ namespace AbilitySystem.Targeting
                 return new List<IAbilityTarget>();
             }
 
-            Collider[] colliders = Physics.OverlapSphere(center, _radius);
+            Collider[] colliders = Physics.OverlapSphere(center, _radius, _targetLayerMask);
             List<IAbilityTarget> targets = new List<IAbilityTarget>();
             foreach (Collider collider in colliders)
             {

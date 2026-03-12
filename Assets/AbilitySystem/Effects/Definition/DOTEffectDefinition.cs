@@ -10,7 +10,7 @@ namespace AbilitySystem.Effects
         public float duration;
         public float tickInterval;
 
-        public override IAbilityEffect CreateEffect(ICaster source)
+        public override IAbilityEffect CreateEffect(IResourceBearer source)
         {
             return new DOTEffect(this, damageAmount, duration, tickInterval, source);
         }

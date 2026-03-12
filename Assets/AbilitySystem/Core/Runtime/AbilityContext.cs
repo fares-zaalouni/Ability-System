@@ -4,15 +4,18 @@ using AbilitySystem.Targeting;
 
 namespace AbilitySystem.Core
 {
+    public class Blackboard : Dictionary<string, object> { }
     public class AbilityContext
     {
-        public ICaster Caster { get; private set; }
+        public IResourceBearer Caster { get; private set; }
         public List<IAbilityTarget> Targets { get; private set; }
-        private readonly Dictionary<string, object> _blackboard = new();
-        public AbilityContext(ICaster caster)
+        private readonly Blackboard _blackboard;
+        public AbilityContext(IResourceBearer caster, Blackboard initialBlackboard = null)
         {
             Caster = caster;
             Targets = new List<IAbilityTarget>();
+            _blackboard = initialBlackboard ?? new Blackboard();
+
         }
         public void Set<T>(string key, T value) => _blackboard[key] = value;
 
@@ -32,6 +35,20 @@ namespace AbilitySystem.Core
         {
             Targets = targets;
         }
-        
+
+        // Creates an independent copy of this context at this moment in time.
+        // The new context has its own Targets list and its own blackboard, so
+        // future mutations by other actions (e.g. a second projectile hit) do
+        // not affect a sub-runner that already captured a fork.
+        public AbilityContext Fork()
+        {
+            var forkedBlackboard = new Blackboard();
+            foreach (var kvp in _blackboard)
+                forkedBlackboard[kvp.Key] = kvp.Value;
+
+            var fork = new AbilityContext(Caster, forkedBlackboard);
+            fork.SetTargets(new List<IAbilityTarget>(Targets));
+            return fork;
+        }
     }
 }

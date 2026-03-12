@@ -8,7 +8,7 @@ namespace AbilitySystem.Targeting
     public class StatusEffectReceiver : MonoBehaviour, IStatusEffectReceiver
     {
         protected List<StatusEffect> _activeEffects = new List<StatusEffect>();
-        public virtual void ApplyStatusEffectTo(StatusEffect statusEffect, ICaster source = null, int stacks = 1)
+        public virtual void ApplyStatusEffectTo(StatusEffect statusEffect, IResourceBearer source = null, int stacks = 1)
         {
             // Check for existing effect to handle stacking
             var existing = _activeEffects.Find(e => e.Definition == statusEffect.Definition);

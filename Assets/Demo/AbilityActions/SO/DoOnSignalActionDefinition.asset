@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 736e134af188fd6498a0f84a994c842a, type: 3}
+  m_Name: DoOnSignalActionDefinition
+  m_EditorClassIdentifier: Assembly-CSharp::AbilitySystem.Core.DoOnSignalActionDefinition
+  IsCancellable: 0
+  IsInterruptible: 0
+  CancelAfterMath: 0
+  InterruptAfterMath: 0
+  _signalToActivateOn: {fileID: 11400000, guid: 426e9b5402b289c458eef68f09915520, type: 2}
+  _signalToContinueOn: {fileID: 11400000, guid: 407d66e700d307d42a903b88e2178183, type: 2}
+  _actions:
+  - {fileID: 11400000, guid: b08404f93aed79c4c88fe9a263679b7d, type: 2}
