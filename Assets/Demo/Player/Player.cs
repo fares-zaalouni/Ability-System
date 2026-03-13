@@ -8,10 +8,13 @@ using UnityEngine;
 using AbilitySystem;
 using System;
 
-public class Player : MonoBehaviour, IResourceBearer, IAbilityTarget
+public class Player : MonoBehaviour, 
+ICaster,
+IResourceBearer, 
+IAbilityTarget
 {
     [SerializeField] private List<ResourceDefinition> _resourceDefinitions = new List<ResourceDefinition>();
-    [SerializeField] private List<LabeledAbility> _abilityDefinitions = new List<LabeledAbility>();
+    [SerializeField] private List<AbilityDefinition> _abilityDefinitions = new List<AbilityDefinition>();
     private Dictionary<string, IResource> _resources = new Dictionary<string, IResource>();
     private Dictionary<string, AbilityInstance> _abilities = new Dictionary<string, AbilityInstance>();
     bool _casted = false;
@@ -20,16 +23,9 @@ public class Player : MonoBehaviour, IResourceBearer, IAbilityTarget
     void Awake()
     {
         RegisterResources();
-        foreach (var labeledAbility in _abilityDefinitions)
+        foreach (var abilityDef in _abilityDefinitions)
         {
-            AbilityInstance abilityInstance = new AbilityInstance(labeledAbility.Definition, this);
-            _abilities.Add(labeledAbility.Label, abilityInstance);
-            SignalBus.Subscribe(labeledAbility.Definition.CastCompleteSignal, 
-                (ctx) => Debug.Log($"Received cast complete signal for {labeledAbility.Label}"));
-            SignalBus.Subscribe(labeledAbility.Definition.CastCancelSignal, 
-                (ctx) => Debug.Log($"Received cast cancel signal for {labeledAbility.Label}"));
-            SignalBus.Subscribe(labeledAbility.Definition.CastInterruptSignal, 
-                (ctx) => Debug.Log($"Received cast interrupt signal for {labeledAbility.Label}"));
+            GrantAbility(abilityDef);
         }
     }
     public void RegisterResources()
@@ -143,5 +139,38 @@ public class Player : MonoBehaviour, IResourceBearer, IAbilityTarget
     {
         Debug.Log($"Trying to get resource: {resourceName}");
         return _resources.TryGetValue(resourceName, out resource);
+    }
+
+    public void GrantAbility(AbilityDefinition abilityDefinition)
+    {
+        if (_abilities.ContainsKey(abilityDefinition.AbilityName))
+        {
+            Debug.LogWarning($"Ability {abilityDefinition.AbilityName} already granted to player.");
+            return;
+        }
+        var abilityInstance = new AbilityInstance(abilityDefinition, this);
+         _abilities.Add(abilityDefinition.AbilityName, abilityInstance);
+            SignalBus.Subscribe(abilityDefinition.CastCompleteSignal, 
+                (ctx) => Debug.Log($"Received cast complete signal for {abilityDefinition.AbilityName}"));
+            SignalBus.Subscribe(abilityDefinition.CastCancelSignal, 
+                (ctx) => Debug.Log($"Received cast cancel signal for {abilityDefinition.AbilityName}"));
+            SignalBus.Subscribe(abilityDefinition.CastInterruptSignal, 
+                (ctx) => Debug.Log($"Received cast interrupt signal for {abilityDefinition.AbilityName}"));
+        _abilities.Add(abilityDefinition.AbilityName, abilityInstance);
+        CooldownManager.Instance.RegisterCooldown(this, abilityInstance.Id, abilityInstance.Cooldown);
+        Debug.Log($"Granted ability: {abilityDefinition.AbilityName}");
+    }
+
+    public void RemoveAbility(AbilityDefinition abilityDefinition)
+    {
+        if (_abilities.ContainsKey(abilityDefinition.AbilityName))
+        {
+            _abilities.Remove(abilityDefinition.AbilityName);
+            Debug.Log($"Removed ability: {abilityDefinition.AbilityName}");
+        }
+        else
+        {
+            Debug.LogWarning($"Ability {abilityDefinition.AbilityName} not found.");
+        }
     }
 }

@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 015ee01372401094ab570632fb3f60df, type: 3}
   m_Name: Fireball_Targeting_SingleTarget
   m_EditorClassIdentifier: Assembly-CSharp::AbilitySystem.Core.TargetingActionDefinition
-  targetingStrategy: {fileID: 0}
+  targetingStrategy: {fileID: 11400000, guid: 033406769572e4f4f982531e508572f6, type: 2}

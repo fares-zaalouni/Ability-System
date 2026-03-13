@@ -13,10 +13,14 @@ MonoBehaviour:
   m_Name: DoOnSignalActionDefinition
   m_EditorClassIdentifier: Assembly-CSharp::AbilitySystem.Core.DoOnSignalActionDefinition
   IsCancellable: 0
-  IsInterruptible: 0
+  IsInterruptible: 1
   CancelAfterMath: 0
-  InterruptAfterMath: 0
-  _signalToActivateOn: {fileID: 11400000, guid: 426e9b5402b289c458eef68f09915520, type: 2}
-  _signalToContinueOn: {fileID: 11400000, guid: 407d66e700d307d42a903b88e2178183, type: 2}
-  _actions:
+  InterruptAfterMath: 2
+  _triggerSignal: {fileID: 11400000, guid: 426e9b5402b289c458eef68f09915520, type: 2}
+  _exitSignal: {fileID: 11400000, guid: 407d66e700d307d42a903b88e2178183, type: 2}
+  _subRunnerExitAftermath: 0
+  _subActions:
+  - {fileID: 11400000, guid: 0a47b2cdc2ad65a40b5f730b39014697, type: 2}
   - {fileID: 11400000, guid: b08404f93aed79c4c88fe9a263679b7d, type: 2}
+  - {fileID: 11400000, guid: f4831614310d4684ab3659e8caab206f, type: 2}
+  - {fileID: 11400000, guid: 3179524c2ba8d744aa3cd1494e25ce78, type: 2}

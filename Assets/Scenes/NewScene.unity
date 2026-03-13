@@ -277,8 +277,7 @@ MonoBehaviour:
   _resourceDefinitions:
   - {fileID: 11400000, guid: 647c17ec548b11c409082c9c076dd5b7, type: 2}
   _abilityDefinitions:
-  - Label: fireball
-    Definition: {fileID: 11400000, guid: fe7c6ae59f7b1c84c84b1bfe3e2033db, type: 2}
+  - {fileID: 11400000, guid: fe7c6ae59f7b1c84c84b1bfe3e2033db, type: 2}
 --- !u!1 &641961407
 GameObject:
   m_ObjectHideFlags: 0

@@ -10,8 +10,11 @@ namespace AbilitySystem.Core
         private AbilityDefinition _definition;
         private List<Cost> _costs;
         private List<AbilityCast> _casts; 
-        private IResourceBearer _caster;
-        private float _cooldownRemaining;
+        private IResourceBearer _resourceBearer;
+        private ICaster _caster;
+        public Cooldown Cooldown { get; private set; }
+
+        public Guid Id { get; } = Guid.NewGuid();
 
 
         public AbilityInstance(AbilityDefinition definition, IResourceBearer caster)
@@ -24,24 +27,24 @@ namespace AbilitySystem.Core
             }
 
             _definition = definition;
-            _caster = caster;
-            _cooldownRemaining = 0f;
+            _resourceBearer = caster;
+            Cooldown = new Cooldown(definition.Cooldown);
         }
 
         public bool IsOnCooldown()
         {
-            return _cooldownRemaining > 0f;
+            return Cooldown.IsOnCooldown;
         }
 
         public bool Cast(out WeakReference<AbilityCast> castRef, Blackboard blackboard = null)
         {
-            if (!IsOnCooldown() && _caster.CanConsumeCost(_costs))
+            if (!IsOnCooldown() && _resourceBearer.CanConsumeCost(_costs))
             {
                 Debug.Log($"Casting {_definition.AbilityName}");
-                _caster.ConsumeCost(_costs);
-                //_cooldownRemaining = _definition.Cooldown;
+                _resourceBearer.ConsumeCost(_costs);
+                CooldownManager.Instance.StartCooldown(_caster, Id);
             
-                AbilityCast cast = new AbilityCast(_caster, _definition, blackboard);
+                AbilityCast cast = new AbilityCast(_resourceBearer, _definition, blackboard);
                 
                 _casts.Add(cast);
                 cast.Execute();
