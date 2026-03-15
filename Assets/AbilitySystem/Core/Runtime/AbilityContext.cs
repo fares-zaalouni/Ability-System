@@ -4,17 +4,16 @@ using AbilitySystem.Targeting;
 
 namespace AbilitySystem.Core
 {
-    public class Blackboard : Dictionary<string, object> { }
     public class AbilityContext
     {
-        public IResourceBearer Caster { get; private set; }
+        public ICaster Caster { get; private set; }
         public List<IAbilityTarget> Targets { get; private set; }
-        private readonly Blackboard _blackboard;
-        public AbilityContext(IResourceBearer caster, Blackboard initialBlackboard = null)
+        private readonly Dictionary<string, object> _blackboard;
+        public AbilityContext(ICaster caster, Dictionary<string, object> initialBlackboard = null)
         {
             Caster = caster;
             Targets = new List<IAbilityTarget>();
-            _blackboard = initialBlackboard ?? new Blackboard();
+            _blackboard = initialBlackboard ?? new Dictionary<string, object>();
 
         }
         public void Set<T>(string key, T value) => _blackboard[key] = value;
@@ -42,7 +41,7 @@ namespace AbilitySystem.Core
         // not affect a sub-runner that already captured a fork.
         public AbilityContext Fork()
         {
-            var forkedBlackboard = new Blackboard();
+            var forkedBlackboard = new Dictionary<string, object>();
             foreach (var kvp in _blackboard)
                 forkedBlackboard[kvp.Key] = kvp.Value;
 

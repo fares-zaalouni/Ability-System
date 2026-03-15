@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using AbilitySystem.Resources;
 using System;
+using NUnit.Framework;
 
 namespace AbilitySystem.Core
 {
@@ -17,7 +18,7 @@ namespace AbilitySystem.Core
         public Guid Id { get; } = Guid.NewGuid();
 
 
-        public AbilityInstance(AbilityDefinition definition, IResourceBearer caster)
+        public AbilityInstance(AbilityDefinition definition, ICaster caster, IResourceBearer resourceBearer = null)
         {
             _costs = new List<Cost>();
             _casts = new List<AbilityCast>();
@@ -27,24 +28,33 @@ namespace AbilitySystem.Core
             }
 
             _definition = definition;
-            _resourceBearer = caster;
+            _resourceBearer = resourceBearer;
+            _caster = caster;
             Cooldown = new Cooldown(definition.Cooldown);
         }
 
-        public bool IsOnCooldown()
-        {
-            return Cooldown.IsOnCooldown;
-        }
+        public bool IsOnCooldown => Cooldown.IsOnCooldown;
+        
 
-        public bool Cast(out WeakReference<AbilityCast> castRef, Blackboard blackboard = null)
+        public bool Cast(out WeakReference<AbilityCast> castRef, Dictionary<string, object> blackboard = null)
         {
-            if (!IsOnCooldown() && _resourceBearer.CanConsumeCost(_costs))
+            bool hasCosts = _costs.Count > 0;
+            if(_resourceBearer == null && hasCosts)
+            {
+                Debug.LogError($"AbilityInstance: Caster {_caster} cannot bear resources, but ability {_definition.AbilityName} has costs.");
+                castRef = null;
+                return false;
+            }
+            
+            bool canPayCosts = !hasCosts || (_resourceBearer != null && _resourceBearer.CanConsumeCost(_costs));
+            
+            if (!IsOnCooldown && canPayCosts)
             {
                 Debug.Log($"Casting {_definition.AbilityName}");
                 _resourceBearer.ConsumeCost(_costs);
                 CooldownManager.Instance.StartCooldown(_caster, Id);
             
-                AbilityCast cast = new AbilityCast(_resourceBearer, _definition, blackboard);
+                AbilityCast cast = new AbilityCast(_caster, _definition, blackboard);
                 
                 _casts.Add(cast);
                 cast.Execute();

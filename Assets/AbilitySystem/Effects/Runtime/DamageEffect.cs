@@ -8,9 +8,9 @@ namespace AbilitySystem.Effects
     public class DamageEffect : IAbilityEffect
     {
         private float _damageAmount;
-        private readonly IResourceBearer _source;
+        private readonly ICaster _source;
 
-        public DamageEffect(float damageAmount, IResourceBearer source)
+        public DamageEffect(float damageAmount, ICaster source)
         {
             _damageAmount = damageAmount;
             _source = source;

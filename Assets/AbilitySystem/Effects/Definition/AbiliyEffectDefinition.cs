@@ -5,6 +5,8 @@ namespace AbilitySystem.Effects
 {
     public abstract class AbilityEffectDefinition : ScriptableObject
     {
-        public abstract IAbilityEffect CreateEffect(IResourceBearer source);
+        public abstract IAbilityEffect CreateEffect(ICaster source);
+        public int Id => GetInstanceID();
+
     }
 }

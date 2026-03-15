@@ -35,13 +35,13 @@ namespace AbilitySystem.Core
             if (_projectileHitSignal != null)
             {
                 hitSignal = new RuntimeSignal();
-                context.Set(_projectileHitSignal.ContextKey, hitSignal);
+                context.Set(_projectileHitSignal.Id, hitSignal);
             }
 
             if (_projectileDestroySignal != null)
             {
                 destroySignal = new RuntimeSignal();
-                context.Set(_projectileDestroySignal.ContextKey, destroySignal);
+                context.Set(_projectileDestroySignal.Id, destroySignal);
             }
 
             _activeProjectile.OnHit += hitData =>

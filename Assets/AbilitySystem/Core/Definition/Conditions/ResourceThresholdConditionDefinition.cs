@@ -17,11 +17,17 @@ namespace AbilitySystem.Core
 
         public override bool Evaluate(AbilityContext context)
         {
-            var hasResource = context.Caster.TryGetResource(_resourceDefinition.ResourceName, out var resource);
-            Debug.Log($"Evaluating ResourceThresholdCondition: Caster has resource '{_resourceDefinition.ResourceName}': {hasResource}");
+            IResourceBearer resourceBearer = context.Caster as IResourceBearer;
+            if (resourceBearer == null)
+            {
+                Debug.LogError("ResourceThresholdConditionDefinition can only be evaluated on casters that implement IResourceBearer.");
+                return false;
+            }
+
+            var hasResource = resourceBearer.TryGetResource(_resourceDefinition.ResourceName, out var resource);
+
             if(!hasResource)
             {
-                Debug.Log($"Resource '{_resourceDefinition.ResourceName}' not found on caster.");
                 return false;
             }
             switch (_valueType)

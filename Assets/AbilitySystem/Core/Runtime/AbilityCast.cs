@@ -11,7 +11,7 @@ namespace AbilitySystem.Core
         public event Action<AbilityContext> OnCancelled;
 
 
-        public AbilityCast(IResourceBearer caster, AbilityDefinition definition, Blackboard initialBlackboard = null)
+        public AbilityCast(ICaster caster, AbilityDefinition definition, Dictionary<string, object> initialBlackboard = null)
         {
             AbilityContext context = new AbilityContext(caster, initialBlackboard);
             List<IAbilityAction> actions = definition.ActionDefinitions.ConvertAll(a => a.CreateRuntimeAction());

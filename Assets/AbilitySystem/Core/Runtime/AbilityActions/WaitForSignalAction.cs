@@ -18,7 +18,7 @@ namespace AbilitySystem.Core
 
             // Prefer a per-cast RuntimeSignal written into context by a producer action
             // (e.g. SpawnProjectileAction). If none exists, fall back to the global SignalBus.
-            if (context.TryGet<RuntimeSignal>(_signal.ContextKey, out _runtimeSignal))
+            if (context.TryGet<RuntimeSignal>(_signal.Id, out _runtimeSignal))
             {
                 _runtimeSignal.Subscribe(OnRuntimeSignalRaised);
             }

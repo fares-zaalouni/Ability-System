@@ -6,23 +6,37 @@ namespace AbilitySystem.Core
 {
     public class CooldownManager : MonoBehaviour, ICooldownManager
     {
-        public static CooldownManager Instance { get; private set; }
+        private static CooldownManager _instance;
+        public static CooldownManager Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    GameObject go = new GameObject("AbilitySystem_CooldownManager");
+                    _instance = go.AddComponent<CooldownManager>();
+                    DontDestroyOnLoad(go);
+                }
+                return _instance;
+            }
+        }
         private readonly Dictionary<ICaster, Dictionary<Guid, Cooldown>> _allCooldowns = new();
         private readonly Dictionary<ICaster, Dictionary<Guid, Cooldown>> _activeCooldowns = new();
         private readonly Dictionary<ICaster, Dictionary<Guid, Action>> _cooldownHandlers = new();
 
         private void Awake()
         {
-            if (Instance != null && Instance != this)
+            if (_instance != null && _instance != this)
             {
                 Destroy(gameObject);
                 return;
             }
-            Instance = this;
+            _instance = this;
             DontDestroyOnLoad(gameObject);
         }
         public void StartCooldown(ICaster caster, Guid abilityCooldownId)
         {
+            Debug.Log("CooldownManager: Starting cooldown for caster " + caster + " with cooldown ID " + abilityCooldownId);
             if(!_allCooldowns.ContainsKey(caster))
             {
                 Debug.LogError($"CooldownManager: Caster {caster} not registered. Cannot start cooldown.");

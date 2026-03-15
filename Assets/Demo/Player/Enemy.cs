@@ -6,10 +6,10 @@ using AbilitySystem.Resources;
 using AbilitySystem.Targeting;
 using UnityEngine;
 
-public class Enemy : StatusEffectReceiver,
+public class Enemy : MonoBehaviour,
 IAbilityTarget,
 IDamageable,
-IResourceBearer
+ICaster
 {
     [SerializeField] private List<ResourceDefinition> _resourceDefinitions = new List<ResourceDefinition>();
     private Dictionary<string, IResource> _resources = new Dictionary<string, IResource>();
@@ -41,7 +41,7 @@ IResourceBearer
         }
         return false;
     }
-    public void TakeDamage(float amount, IResourceBearer source = null)
+    public void TakeDamage(float amount, ICaster source = null)
     {
         if (_resources.TryGetValue("Health", out var healthResource))
         {
@@ -74,5 +74,13 @@ IResourceBearer
         throw new NotImplementedException();
     }
 
-    
+    public void GrantAbility(AbilityDefinition abilityDefinition)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void RemoveAbility(AbilityDefinition abilityDefinition)
+    {
+        throw new NotImplementedException();
+    }
 }

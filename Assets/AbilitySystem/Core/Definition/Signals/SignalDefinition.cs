@@ -8,6 +8,6 @@ namespace AbilitySystem.Core
         [SerializeField] private string _signalName;
 
         // Stable per-SO key used to store/retrieve a RuntimeSignal in AbilityContext.
-        public string ContextKey => $"__sig_{GetInstanceID()}";
+        public string Id => $"__sig_{GetInstanceID()}";
     }
 }

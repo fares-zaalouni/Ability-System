@@ -47,7 +47,7 @@ IAbilityTarget
         {
             if (_abilities.TryGetValue("fireball", out var abilityInstance))
             {
-                Blackboard initialBlackboard = new Blackboard
+                var initialBlackboard = new Dictionary<string, object>
                 {
                     { ContextKeys.ProjectileLaunchDirection, transform.forward },
                     { ContextKeys.ProjectileSpawnPoint, transform.position + transform.forward * 1.5f }
@@ -148,7 +148,7 @@ IAbilityTarget
             Debug.LogWarning($"Ability {abilityDefinition.AbilityName} already granted to player.");
             return;
         }
-        var abilityInstance = new AbilityInstance(abilityDefinition, this);
+        var abilityInstance = new AbilityInstance(abilityDefinition, this, this);
          _abilities.Add(abilityDefinition.AbilityName, abilityInstance);
             SignalBus.Subscribe(abilityDefinition.CastCompleteSignal, 
                 (ctx) => Debug.Log($"Received cast complete signal for {abilityDefinition.AbilityName}"));
@@ -156,7 +156,7 @@ IAbilityTarget
                 (ctx) => Debug.Log($"Received cast cancel signal for {abilityDefinition.AbilityName}"));
             SignalBus.Subscribe(abilityDefinition.CastInterruptSignal, 
                 (ctx) => Debug.Log($"Received cast interrupt signal for {abilityDefinition.AbilityName}"));
-        _abilities.Add(abilityDefinition.AbilityName, abilityInstance);
+
         CooldownManager.Instance.RegisterCooldown(this, abilityInstance.Id, abilityInstance.Cooldown);
         Debug.Log($"Granted ability: {abilityDefinition.AbilityName}");
     }

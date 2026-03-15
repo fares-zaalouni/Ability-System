@@ -10,7 +10,7 @@ namespace AbilitySystem.Core
         }
         public void Execute(AbilityContext context, AbilityRunner runner)
         {
-            if (context.TryGet<RuntimeSignal>(_signal.ContextKey, out var runtimeSignal))
+            if (context.TryGet<RuntimeSignal>(_signal.Id, out var runtimeSignal))
             {
                 runtimeSignal.Raise(context);
             }
