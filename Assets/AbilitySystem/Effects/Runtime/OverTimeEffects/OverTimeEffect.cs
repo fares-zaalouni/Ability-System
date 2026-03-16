@@ -7,8 +7,8 @@ namespace AbilitySystem.Effects
 {
     public abstract class OverTimeEffect : IAbilityEffect
     {
-        public AbilityEffectDefinition _definition { get; private set; }
-        protected ICaster _source;
+        public OverTimeEffectDefinition _definition { get; private set; }
+        public ICaster Source { get; private set; }
         public bool ApplyOnce { get; private set; }
         public float TickInterval { get; private set; }
         public int TickCount { get; private set; }
@@ -17,7 +17,11 @@ namespace AbilitySystem.Effects
         public float TotalDuration { get; private set; }
         public int Stacks { get; private set; }
         public int MaxStacks { get; private set; }
+        public IStackingPolicy StackingPolicy { get; private set; }
+        public int EffectTypeId => _definition.Id;
+        public Guid Id { get; } = Guid.NewGuid();
 
+        private bool _isExpired = false;
 
         public event Action EffectApplied;
         public event Action EffectExpired;
@@ -33,7 +37,7 @@ namespace AbilitySystem.Effects
         protected virtual void OnEffectRefreshed() => EffectRefreshed?.Invoke();
         protected virtual void OnEffectTick() => EffectTick?.Invoke();
 
-        public OverTimeEffect(AbilityEffectDefinition definition, float duration, float tickInterval, bool applyOnce, int stacks, ICaster source)
+        public OverTimeEffect(OverTimeEffectDefinition definition, float duration, float tickInterval, int stacks, int maxStacks, ICaster source, bool applyOnce = false)
         {
             _definition = definition;
             RemainingDuration = duration;
@@ -42,11 +46,12 @@ namespace AbilitySystem.Effects
             TickInterval = tickInterval;
             ApplyOnce = applyOnce;
             Stacks = stacks;
-            MaxStacks = stacks;
-            _source = source;
+            MaxStacks = maxStacks;
+            StackingPolicy = definition.StackingPolicy.CreateRuntimeStackingStrategy();
+            Source = source;
+            
         }
         
-        public int Id => _definition.Id;
         public void Tick(float deltaTime, IAbilityTarget target)
         {
             RemainingDuration -= deltaTime;
@@ -56,24 +61,40 @@ namespace AbilitySystem.Effects
             
             if (ApplyOnce)
             {
-                ApplyTo(target);
+                ApplyTickTo(target);
                 ApplyOnce = false; // Ensure it only applies once
             }
             else
             {
                 if (TimeSinceLastTick >= TickInterval && RemainingDuration > 0f)
                 {
-                    ApplyTo(target);
+                    ApplyTickTo(target);
                     TimeSinceLastTick -= TickInterval;
+                }
+                if(RemainingDuration <= 0f && !_isExpired)
+                {
+                    _isExpired = true;
+                    EffectExpired?.Invoke();
                 }
             }
         }
 
-        public abstract void ApplyTo(IAbilityTarget target);
-        
-        public abstract void HandleStacking(IAbilityTarget target, List<OverTimeEffect> existingEffects);
-        public abstract void HandleExpiration(IAbilityTarget target, List<OverTimeEffect> existingEffects);
+        public abstract void ApplyTickTo(IAbilityTarget target);
 
+        public  void ApplyTo(IAbilityTarget target)
+        {
+            OnEffectApplied();
+            RegisterToTarget(target);
+        }
+
+        public void RegisterToTarget(IAbilityTarget target)
+        {
+            OverTimeEffectLifetimeManager.Instance.RegisterOverTimeEffect(target, this);
+        }
+        public void UnregisterFromTarget(IAbilityTarget target)
+        {
+            OverTimeEffectLifetimeManager.Instance.UnregisterOverTimeEffect(target, this);
+        }
 
         public virtual void AddStacks(int amount)
         {
@@ -90,6 +111,13 @@ namespace AbilitySystem.Effects
         public virtual void RefreshDuration()
         {
             RemainingDuration = TotalDuration;
+            EffectRefreshed?.Invoke();
+        }
+
+        public virtual void ExtendDuration(float amount)
+        {
+            RemainingDuration += amount;
+            TotalDuration += amount;
             EffectRefreshed?.Invoke();
         }
     }

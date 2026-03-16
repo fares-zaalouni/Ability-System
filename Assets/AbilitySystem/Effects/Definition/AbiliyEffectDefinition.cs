@@ -7,6 +7,5 @@ namespace AbilitySystem.Effects
     {
         public abstract IAbilityEffect CreateEffect(ICaster source);
         public int Id => GetInstanceID();
-
     }
 }

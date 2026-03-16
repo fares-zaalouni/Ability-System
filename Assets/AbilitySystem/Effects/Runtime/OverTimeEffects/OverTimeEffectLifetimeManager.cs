@@ -21,8 +21,11 @@ namespace AbilitySystem.Effects
                 return _instance;
             }
         }
-        private readonly Dictionary<IAbilityTarget, Dictionary<int, List<OverTimeEffect>>> _activeOverTimeEffects = new();
-        private readonly Dictionary<IAbilityTarget, Dictionary<int, Action>> _overTimeEffectHandlers = new();
+
+        private readonly Dictionary<IAbilityTarget, Dictionary<int, OverTimeEffectGroup>> _activeOverTimeEffects = new();
+        private readonly Dictionary<IAbilityTarget, Dictionary<Guid, Action>> _overTimeEffectHandlers = new();
+
+
         private void Awake()
         {
             if (_instance != null && _instance != this)
@@ -37,63 +40,80 @@ namespace AbilitySystem.Effects
         public void RegisterOverTimeEffect(IAbilityTarget target, OverTimeEffect effect)
         {
             if (!_activeOverTimeEffects.ContainsKey(target))
-            {
-                _activeOverTimeEffects[target] = new Dictionary<int, List<OverTimeEffect>>();
-                _overTimeEffectHandlers[target] = new Dictionary<int, Action>();
-            }
-            if (!_activeOverTimeEffects[target].ContainsKey(effect.Id))
-            {
-                _activeOverTimeEffects[target][effect.Id] = new List<OverTimeEffect>();
-            }
+                _activeOverTimeEffects[target] = new Dictionary<int, OverTimeEffectGroup>();
+            if (!_activeOverTimeEffects[target].ContainsKey(effect.EffectTypeId))
+                _activeOverTimeEffects[target][effect.EffectTypeId] = new OverTimeEffectGroup();
 
-            effect.HandleStacking(target, _activeOverTimeEffects[target][effect.Id]);
-
-            var handler = new Action(() =>
+            if (effect.StackingPolicy.HandleStacking(target, effect, _activeOverTimeEffects[target][effect.EffectTypeId]))
             {
-                if(_activeOverTimeEffects.TryGetValue(target, out var targetEffects))
+                Action handler = () =>
                 {
-                    if(targetEffects.TryGetValue(effect.Id, out var activeEffect))
-                    {
-                        effect.HandleExpiration(target, activeEffect);
-                        if(activeEffect.Count == 0)
-                        {
-                            targetEffects.Remove(effect.Id);
-                        }
-                    }
-                }else
-                {
-                    Debug.LogError($"Effect Action should not be called when target {target} has no active effects.");
-                }
-            });
-            effect.EffectExpired += handler;
-            _overTimeEffectHandlers[target][effect.Id] = handler;
+                    UnregisterOverTimeEffect(target, effect);
+                };
+                effect.EffectExpired += handler;
+
+                if (!_overTimeEffectHandlers.ContainsKey(target))
+                    _overTimeEffectHandlers[target] = new Dictionary<Guid, Action>();
+                _overTimeEffectHandlers[target][effect.Id] = handler;      
+            }
+            if(_activeOverTimeEffects[target][effect.EffectTypeId].EffectCount == 0)
+                    Debug.LogWarning("Registering first OverTimeEffect of type " + effect.EffectTypeId +" but it was not added to the group. Check if the stacking policy is set up correctly. Effect: " + effect);
         }
 
         public void UnregisterOverTimeEffect(IAbilityTarget target, OverTimeEffect effect)
         {
-            if (_activeOverTimeEffects.TryGetValue(target, out var targetEffects) && targetEffects.TryGetValue(effect.Id, out var activeEffect))
+            if (_activeOverTimeEffects.TryGetValue(target, out var effectsById) && effectsById.TryGetValue(effect.EffectTypeId, out var group))
             {
-                activeEffect.Remove(effect);
-                if (activeEffect.Count == 0)
-                {
-                    targetEffects.Remove(effect.Id);
-                }
+                group.RemoveEffect(effect);
             }
-            else
-            {
-                Debug.LogError($"Attempting to unregister effect {effect} from target {target}, but it was not found in active effects.");
-            }
-
-            if (_overTimeEffectHandlers.TryGetValue(target, out var targetHandlers) && targetHandlers.TryGetValue(effect.Id, out var handler))
+            if (_overTimeEffectHandlers.TryGetValue(target, out var handlersById) && handlersById.TryGetValue(effect.Id, out var handler))
             {
                 effect.EffectExpired -= handler;
-                targetHandlers.Remove(effect.Id);
-            }
-            else
-            {
-                Debug.LogError($"Attempting to unregister effect handler for effect {effect} from target {target}, but it was not found in handlers.");
+                handlersById.Remove(effect.Id);
             }
         }
 
+        private void Tick(float deltaTime)
+        {
+            foreach (var targetEntry in _activeOverTimeEffects)
+            {
+                var target = targetEntry.Key;
+                foreach (var groupEntry in targetEntry.Value)
+                {
+                    var group = groupEntry.Value;
+                    group.TickAll(deltaTime, target);
+                }
+            }
+        }
+
+        public void FixedUpdate()
+        {
+            Tick(Time.fixedDeltaTime);
+        }
+        public void CleanUpTarget(IAbilityTarget target)
+        {
+            if (_activeOverTimeEffects.TryGetValue(target, out var effectsById))
+            {
+                foreach (var group in effectsById.Values)
+                {
+                    for (int i = group.Effects.Count - 1; i >= 0; i--)
+                    {
+                        UnregisterOverTimeEffect(target, group.Effects[i]);
+                    }
+                }
+                _activeOverTimeEffects.Remove(target);
+            }
+        }
+        public void CleanUpTargetEffectType(IAbilityTarget target, int effectTypeId)
+        {
+            if (_activeOverTimeEffects.TryGetValue(target, out var effectsById) && effectsById.TryGetValue(effectTypeId, out var group))
+            {
+                for (int i = group.Effects.Count - 1; i >= 0; i--)
+                {
+                    UnregisterOverTimeEffect(target, group.Effects[i]);
+                }
+                effectsById.Remove(effectTypeId);
+            }
+        }
     }
 }
