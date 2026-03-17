@@ -9,10 +9,11 @@ namespace AbilitySystem.Core
         [SerializeField] private SignalDefinition _triggerSignal;
         [SerializeField] private SignalDefinition _exitSignal;
         [SerializeField] private SustainedActionEndAftermath _subRunnerExitAftermath;
+        [SerializeField] private SubRunnerCleanupMode _subRunnerCleanupMode = SubRunnerCleanupMode.RespectChildAftermath;
         [SerializeField] private List<AbilityActionDefinition> _subActions;
         public override IAbilityAction CreateRuntimeAction()
         {
-            return new DoOnSignalAction(_triggerSignal, _exitSignal, _subActions.ConvertAll(a => a.CreateRuntimeAction()), _subRunnerExitAftermath, IsCancellable, IsInterruptible, CancelAfterMath, InterruptAfterMath);
+            return new DoOnSignalAction(_triggerSignal, _exitSignal, _subActions.ConvertAll(a => a.CreateRuntimeAction()), _subRunnerExitAftermath, _subRunnerCleanupMode, IsCancellable, IsInterruptible, CancelAfterMath, InterruptAfterMath);
         }
     }
 }

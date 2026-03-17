@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System;
 using AbilitySystem.Utility;
 using UnityEngine;
 
@@ -13,11 +14,14 @@ namespace AbilitySystem.Core
         private List<IAbilityAction> _actions;
         private Coroutine _coroutine;
         private int _tickedTimes;
+        private readonly SubRunnerSubscriptions _subRunnerSubscriptions;
+        private readonly SubRunnerCleanupMode _subRunnerCleanupMode;
 
         public RepeatAction(
             float tickInterval,
             float duration,
             List<IAbilityAction> actions,
+            SubRunnerCleanupMode subRunnerCleanupMode,
             bool isCancellable, 
             bool isInterruptible, 
             SustainedActionEndAftermath cancelAfterMath, 
@@ -27,7 +31,9 @@ namespace AbilitySystem.Core
             _tickInterval = tickInterval;
             _duration = duration;
             _actions = actions;
+            _subRunnerCleanupMode = subRunnerCleanupMode;
             _subRunners = new List<AbilityRunner>();
+            _subRunnerSubscriptions = new SubRunnerSubscriptions();
         }
 
         public override void Execute(AbilityContext context, AbilityRunner runner)
@@ -42,8 +48,10 @@ namespace AbilitySystem.Core
             if(!_isCancellable) return false;
             var snapshot = new List<AbilityRunner>(_subRunners);
             _subRunners.Clear();
-            foreach (var subRunner in snapshot)
-                subRunner.StopWithCancel();
+            _subRunnerSubscriptions.UnsubscribeAndApplyAftermath(
+                snapshot,
+                SustainedActionEndAftermath.Cancel,
+                _subRunnerCleanupMode);
             return Stop(context);
         }
 
@@ -52,8 +60,10 @@ namespace AbilitySystem.Core
             if(!_isInterruptible) return false;
             var snapshot = new List<AbilityRunner>(_subRunners);
             _subRunners.Clear();
-            foreach (var subRunner in snapshot)
-                subRunner.StopWithInterrupt();
+            _subRunnerSubscriptions.UnsubscribeAndApplyAftermath(
+                snapshot,
+                SustainedActionEndAftermath.Interrupt,
+                _subRunnerCleanupMode);
             return Stop(context);
         }
         private bool Stop(AbilityContext context)
@@ -73,9 +83,25 @@ namespace AbilitySystem.Core
             while (elapsed < duration)
             {
                 AbilityRunner subRunner = new AbilityRunner(_actions, context);
-                subRunner.OnCancelled += runner.Cancel;
-                subRunner.OnInterrupted += runner.Interrupt;
-                subRunner.OnCompleted += () => _subRunners.Remove(subRunner);
+
+                Action onCancelled = () =>
+                {
+                    _subRunnerSubscriptions.Unsubscribe(subRunner);
+                    _subRunners.Remove(subRunner);
+                    runner.Cancel();
+                };
+                Action onInterrupted = () =>
+                {
+                    _subRunnerSubscriptions.Unsubscribe(subRunner);
+                    _subRunners.Remove(subRunner);
+                    runner.Interrupt();
+                };
+                Action onCompleted = () =>
+                {
+                    _subRunnerSubscriptions.Unsubscribe(subRunner);
+                    _subRunners.Remove(subRunner);
+                };
+                _subRunnerSubscriptions.Subscribe(subRunner, onCompleted, onCancelled, onInterrupted);
 
                 _subRunners.Add(subRunner);
                 subRunner.Next();

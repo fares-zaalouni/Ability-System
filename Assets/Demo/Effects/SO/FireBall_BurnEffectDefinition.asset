@@ -12,6 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea5304848b3dae44d8870aebf709f914, type: 3}
   m_Name: FireBall_BurnEffectDefinition
   m_EditorClassIdentifier: Assembly-CSharp::DOTEffectDefinition
-  damageAmount: 2
-  duration: 3
-  tickInterval: 0.5
+  _duration: 5
+  _tickInterval: 0.5
+  _maxStacks: 3
+  _initialStacks: 1
+  _applyOnce: 0
+  _stackingPolicy: {fileID: 11400000, guid: c3345527da2dcc340afa6cd32de0e17a, type: 2}
+  _damageAmount: 20

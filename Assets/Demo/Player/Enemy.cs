@@ -46,7 +46,7 @@ ICaster
         if (_resources.TryGetValue("Health", out var healthResource))
         {
             healthResource.Consume(amount); 
-            Debug.Log($"Enemy took {amount} damage. Remaining Health: {healthResource.CurrentAmount}");
+            Debug.Log($"{name} took {amount} damage. Remaining Health: {healthResource.CurrentAmount}");
             if (healthResource.CurrentAmount <= 0)
             {
                 Die();
@@ -55,7 +55,7 @@ ICaster
     }
     private void Die()
     {
-        Debug.Log("Enemy died!");
+        Debug.Log($"{name} died!");
         // Add death logic here (e.g., play animation, drop loot, etc.)
     }
 

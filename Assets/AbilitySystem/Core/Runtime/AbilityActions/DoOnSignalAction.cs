@@ -13,9 +13,8 @@ namespace AbilitySystem.Core
         private RuntimeSignal _triggerRuntimeSignal;
         private RuntimeSignal _exitRuntimeSignal;
         private readonly List<AbilityRunner> _activeSubRunners;
-        // Stored so we can detach before calling Cancel/Interrupt on a sub-runner,
-        // preventing the sub-runner's aftermath from re-entering this action.
-        private readonly Dictionary<AbilityRunner, (Action onCancelled, Action onInterrupted, Action onCompleted)> _subRunnerCallbacks;
+        private readonly SubRunnerSubscriptions _subRunnerSubscriptions;
+        private readonly SubRunnerCleanupMode _subRunnerCleanupMode;
         private AbilityRunner _mainRunner;
 
         public DoOnSignalAction(
@@ -23,6 +22,7 @@ namespace AbilitySystem.Core
             SignalDefinition exitSignal,
             List<IAbilityAction> subActions,
             SustainedActionEndAftermath subRunnerExitAftermath,
+            SubRunnerCleanupMode subRunnerCleanupMode,
             bool isCancellable,
             bool isInterruptible,
             SustainedActionEndAftermath cancelAfterMath,
@@ -33,8 +33,9 @@ namespace AbilitySystem.Core
             _exitSignal = exitSignal;
             _subActions = subActions;
             _subRunnerExitAftermath = subRunnerExitAftermath;
+            _subRunnerCleanupMode = subRunnerCleanupMode;
             _activeSubRunners = new List<AbilityRunner>();
-            _subRunnerCallbacks = new Dictionary<AbilityRunner, (Action, Action, Action)>();
+            _subRunnerSubscriptions = new SubRunnerSubscriptions();
         }
 
         public override void Execute(AbilityContext context, AbilityRunner runner)
@@ -58,16 +59,26 @@ namespace AbilitySystem.Core
             // Without this, a second trigger hit would overwrite Targets and blackboard
             // values in the shared context, corrupting all still-running sub-runners.
             AbilityRunner subRunner = new AbilityRunner(_subActions, context.Fork());
-            
-            // Store lambdas so we can detach them by reference before triggering cleanup.
-            Action onCancelled   = () => { DetachSubRunnerCallbacks(subRunner); _activeSubRunners.Remove(subRunner); _mainRunner.Cancel(); };
-            Action onInterrupted = () => { DetachSubRunnerCallbacks(subRunner); _activeSubRunners.Remove(subRunner); _mainRunner.Interrupt(); };
-            Action onCompleted   = () => { DetachSubRunnerCallbacks(subRunner); _activeSubRunners.Remove(subRunner); };
 
-            subRunner.OnCancelled   += onCancelled;
-            subRunner.OnInterrupted += onInterrupted;
-            subRunner.OnCompleted   += onCompleted;
-            _subRunnerCallbacks[subRunner] = (onCancelled, onInterrupted, onCompleted);
+            // Store lambdas so we can detach them by reference before triggering cleanup.
+            Action onCancelled = () =>
+            {
+                _subRunnerSubscriptions.Unsubscribe(subRunner);
+                _activeSubRunners.Remove(subRunner);
+                _mainRunner.Cancel();
+            };
+            Action onInterrupted = () =>
+            {
+                _subRunnerSubscriptions.Unsubscribe(subRunner);
+                _activeSubRunners.Remove(subRunner);
+                _mainRunner.Interrupt();
+            };
+            Action onCompleted = () =>
+            {
+                _subRunnerSubscriptions.Unsubscribe(subRunner);
+                _activeSubRunners.Remove(subRunner);
+            };
+            _subRunnerSubscriptions.Subscribe(subRunner, onCompleted, onCancelled, onInterrupted);
             _activeSubRunners.Add(subRunner);
 
             subRunner.Next();
@@ -96,39 +107,14 @@ namespace AbilitySystem.Core
             return true;
         }
 
-        // Snapshot + clear the live list so callbacks that fire during cleanup
-        // (e.g. OnCompleted removing from the list) don't interfere.
-        // Detach callbacks so orphaned sub-runners (None aftermath) can no longer
-        // reach _mainRunner after this action has finished.
-        // StopWithCancel/StopWithInterrupt never fire events, so there is no
-        // re-entry risk regardless of callback wiring.
+        // Detach callbacks first, then apply configured child cleanup mode.
         private void CleanupSubRunners(SustainedActionEndAftermath aftermath)
         {
-            foreach (var subRunner in _activeSubRunners)
-            {
-                // Always detach: for Cancel/Interrupt this is just dictionary cleanup;
-                // for None it's essential — orphaned sub-runners that internally cancel
-                // themselves must not reach _mainRunner after this action has finished.
-                DetachSubRunnerCallbacks(subRunner);
-
-                if (aftermath == SustainedActionEndAftermath.Cancel)
-                    subRunner.StopWithCancel();
-                else if (aftermath == SustainedActionEndAftermath.Interrupt)
-                    subRunner.StopWithInterrupt();
-                // None: sub-runner keeps running, fully disconnected from this pipeline.
-            }
+            _subRunnerSubscriptions.UnsubscribeAndApplyAftermath(
+                _activeSubRunners,
+                aftermath,
+                _subRunnerCleanupMode);
             _activeSubRunners.Clear();
-        }
-
-        private void DetachSubRunnerCallbacks(AbilityRunner subRunner)
-        {
-            if (_subRunnerCallbacks.TryGetValue(subRunner, out var callbacks))
-            {
-                subRunner.OnCancelled   -= callbacks.onCancelled;
-                subRunner.OnInterrupted -= callbacks.onInterrupted;
-                subRunner.OnCompleted   -= callbacks.onCompleted;
-                _subRunnerCallbacks.Remove(subRunner);
-            }
         }
 
         private void UnsubscribeFromSignals()

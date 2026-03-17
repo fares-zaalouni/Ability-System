@@ -55,7 +55,9 @@ namespace AbilitySystem.Core
                 CooldownManager.Instance.StartCooldown(_caster, Id);
             
                 AbilityCast cast = new AbilityCast(_caster, _definition, blackboard);
-                
+                cast.OnCancelled += (ctx) => _casts.Remove(cast);
+                cast.OnCompleted += (ctx) => _casts.Remove(cast);
+                cast.OnInterrupted += (ctx) => _casts.Remove(cast);
                 _casts.Add(cast);
                 cast.Execute();
                 castRef = new WeakReference<AbilityCast>(cast);

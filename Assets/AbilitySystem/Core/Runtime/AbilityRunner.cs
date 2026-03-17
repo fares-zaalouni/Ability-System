@@ -44,6 +44,7 @@ namespace AbilitySystem.Core
         {
             if (_currentActionIndex < _actions.Count && _actions[_currentActionIndex] is SustainedAction interruptable)
             {
+                Debug.Log("Attempting to interrupt action: " + _actions[_currentActionIndex].GetType().Name);
                 if (interruptable.Interrupt(_context))
                     TakeAftermathAction(interruptable.InterruptAftermath);
             }
@@ -53,13 +54,13 @@ namespace AbilitySystem.Core
         // Use these when a parent action owns this runner and handles propagation itself.
         // Unlike Cancel()/Interrupt(), these never call TakeAftermathAction, so OnCancelled
         // and OnInterrupted are never raised and cannot re-enter the caller.
-        public void StopWithCancel()
+        public void StopSilentlyAsCancelled()
         {
             if (_currentActionIndex < _actions.Count && _actions[_currentActionIndex] is SustainedAction sa)
                 sa.Cancel(_context);
         }
 
-        public void StopWithInterrupt()
+        public void StopSilentlyAsInterrupted()
         {
             if (_currentActionIndex < _actions.Count && _actions[_currentActionIndex] is SustainedAction sa)
                 sa.Interrupt(_context);
