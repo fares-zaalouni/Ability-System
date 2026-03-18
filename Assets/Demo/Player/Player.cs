@@ -125,16 +125,6 @@ IAbilityTarget
         return true;
     }
 
-    public bool CanApplyEffect(IAbilityEffect effect)
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public void ApplyEffect(IAbilityEffect effect)
-    {
-        throw new System.NotImplementedException();
-    }
-
     public bool TryGetResource(string resourceName, out IResource resource)
     {
         Debug.Log($"Trying to get resource: {resourceName}");
@@ -156,7 +146,6 @@ IAbilityTarget
                 (ctx) => Debug.Log($"Received cast cancel signal for {abilityDefinition.AbilityName}"));
             SignalBus.Subscribe(abilityDefinition.CastInterruptSignal, 
                 (ctx) => Debug.Log($"Received cast interrupt signal for {abilityDefinition.AbilityName}"));
-
         CooldownManager.Instance.RegisterCooldown(this, abilityInstance.Id, abilityInstance.Cooldown);
         Debug.Log($"Granted ability: {abilityDefinition.AbilityName}");
     }
@@ -165,6 +154,8 @@ IAbilityTarget
     {
         if (_abilities.ContainsKey(abilityDefinition.AbilityName))
         {
+            var ability = _abilities[abilityDefinition.AbilityName];
+            ability.Dispose();
             _abilities.Remove(abilityDefinition.AbilityName);
             Debug.Log($"Removed ability: {abilityDefinition.AbilityName}");
         }
@@ -172,5 +163,19 @@ IAbilityTarget
         {
             Debug.LogWarning($"Ability {abilityDefinition.AbilityName} not found.");
         }
+    }
+
+    private void Dispose()
+    {
+        foreach (var ability in _abilities.Values)
+        {
+            ability.Dispose();
+        }
+        _abilities.Clear();
+    }
+
+    public void OnDestroy()
+    {
+        Dispose();
     }
 }

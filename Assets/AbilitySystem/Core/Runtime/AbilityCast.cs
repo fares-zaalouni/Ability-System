@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace AbilitySystem.Core
 {
@@ -14,6 +15,11 @@ namespace AbilitySystem.Core
         public AbilityCast(ICaster caster, AbilityDefinition definition, Dictionary<string, object> initialBlackboard = null)
         {
             AbilityContext context = new AbilityContext(caster, initialBlackboard);
+            if (definition == null)
+            {
+                Debug.LogError($"AbilityCast: AbilityDefinition is null for caster {caster}.");
+                return;
+            }
             List<IAbilityAction> actions = definition.ActionDefinitions.ConvertAll(a => a.CreateRuntimeAction());
             _runner = new AbilityRunner(actions, context);
             _runner.OnCompleted += () => OnCompleted?.Invoke(context);

@@ -15,12 +15,15 @@ namespace AbilitySystem.Effects
             _damageAmount = damageAmount;
             _source = source;
         }
-        public void ApplyTo(IAbilityTarget target)
+        public AbilityEffectApplyResult ApplyTo(IAbilityTarget target)
         {
             if(target is IDamageable damageable)
             {
                 damageable.TakeDamage(_damageAmount, _source);
+                return AbilityEffectApplyResult.Applied;
             }
+
+            return AbilityEffectApplyResult.SkippedUnsupportedTarget;
         }
     }
 }

@@ -33,14 +33,6 @@ ICaster
     {
         return true;
     }
-    public bool CanApplyEffect(IAbilityEffect effect)
-    {
-        if (effect is DamageEffect || effect is DOTEffect)
-        {
-            return true;
-        }
-        return false;
-    }
     public void TakeDamage(float amount, ICaster source = null)
     {
         if (_resources.TryGetValue("Health", out var healthResource))

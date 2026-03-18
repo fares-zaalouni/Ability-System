@@ -15,11 +15,40 @@ namespace AbilitySystem.Core
 
         public void Execute(AbilityContext context, AbilityRunner runner)
         {
-            
+            int totalTargets = context.Targets.Count;
+            int appliedCount = 0;
+            int skippedCount = 0;
+            int failedCount = 0;
+
             foreach (IAbilityTarget target in context.Targets)
             {
-                _abilityEffectDefinition.CreateEffect(context.Caster).ApplyTo(target);
+                var applyResult = _abilityEffectDefinition.CreateEffect(context.Caster).ApplyTo(target);
+                switch (applyResult)
+                {
+                    case AbilityEffectApplyResult.Applied:
+                        appliedCount++;
+                        break;
+                    case AbilityEffectApplyResult.SkippedUnsupportedTarget:
+                        skippedCount++;
+                        break;
+                    case AbilityEffectApplyResult.Failed:
+                        failedCount++;
+                        break;
+                }
             }
+
+            context.Set(ContextKeys.EffectApplyTotalTargets, totalTargets);
+            context.Set(ContextKeys.EffectApplyAppliedCount, appliedCount);
+            context.Set(ContextKeys.EffectApplySkippedCount, skippedCount);
+            context.Set(ContextKeys.EffectApplyFailedCount, failedCount);
+
+            if (Debug.isDebugBuild && totalTargets > 0 && appliedCount == 0)
+            {
+                Debug.LogWarning(
+                    $"ApplyEffectAction: Effect '{_abilityEffectDefinition.name}' applied to 0/{totalTargets} targets. " +
+                    $"Skipped={skippedCount}, Failed={failedCount}.");
+            }
+
             runner.Next();
         }
     }

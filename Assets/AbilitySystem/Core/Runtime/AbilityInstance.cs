@@ -24,6 +24,12 @@ namespace AbilitySystem.Core
             _casts = new List<AbilityCast>();
             foreach (var costDef in definition.Costs)
             {
+                if( costDef == null)
+                {
+                    Debug.LogError($"AbilityInstance: AbilityDefinition {definition.AbilityName} has a null cost definition.");
+                    continue;
+                }
+
                 _costs.Add(costDef.CreateRuntimeCost());
             }
 
@@ -65,6 +71,16 @@ namespace AbilitySystem.Core
             }
             castRef = null;
             return false;
+        }
+
+        public void Dispose()
+        {
+            CooldownManager.Instance.UnregisterCooldown(_caster, Id);
+            foreach (var cast in _casts)
+            {
+                cast.Cancel();
+            }
+            _casts.Clear();
         }
 
     }

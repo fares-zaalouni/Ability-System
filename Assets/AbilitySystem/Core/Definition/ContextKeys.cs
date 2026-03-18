@@ -15,5 +15,11 @@ namespace AbilitySystem.Core
         public const string WaitDuration = "WaitDuration";
         public const string MaxWaitDuration = "MaxWaitDuration";
         public const string RepeatTickedTimes = "RepeatTickedTimes";
+
+        // Effect apply outcome summary keys
+        public const string EffectApplyTotalTargets = "EffectApplyTotalTargets";
+        public const string EffectApplyAppliedCount = "EffectApplyAppliedCount";
+        public const string EffectApplySkippedCount = "EffectApplySkippedCount";
+        public const string EffectApplyFailedCount = "EffectApplyFailedCount";
     }
 }

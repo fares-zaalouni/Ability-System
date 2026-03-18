@@ -81,10 +81,14 @@ namespace AbilitySystem.Effects
 
         public abstract void ApplyTickTo(IAbilityTarget target);
 
-        public  void ApplyTo(IAbilityTarget target)
+        public AbilityEffectApplyResult ApplyTo(IAbilityTarget target)
         {
+            if (target == null)
+                return AbilityEffectApplyResult.Failed;
+
             OnEffectApplied();
             RegisterToTarget(target);
+            return AbilityEffectApplyResult.Applied;
         }
 
         public void RegisterToTarget(IAbilityTarget target)

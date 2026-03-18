@@ -19,6 +19,7 @@ MonoBehaviour:
   _triggerSignal: {fileID: 11400000, guid: 426e9b5402b289c458eef68f09915520, type: 2}
   _exitSignal: {fileID: 11400000, guid: 407d66e700d307d42a903b88e2178183, type: 2}
   _subRunnerExitAftermath: 0
+  _subRunnerCleanupMode: 2
   _subActions:
   - {fileID: 11400000, guid: 0a47b2cdc2ad65a40b5f730b39014697, type: 2}
   - {fileID: 11400000, guid: b08404f93aed79c4c88fe9a263679b7d, type: 2}

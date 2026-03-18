@@ -3,8 +3,15 @@ using AbilitySystem.Targeting;
 
 namespace AbilitySystem.Effects
 {
+    public enum AbilityEffectApplyResult
+    {
+        Applied,
+        SkippedUnsupportedTarget,
+        Failed
+    }
+
     public interface IAbilityEffect
     {
-        void ApplyTo(IAbilityTarget target);
+        AbilityEffectApplyResult ApplyTo(IAbilityTarget target);
     }
 }
