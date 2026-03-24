@@ -15,7 +15,7 @@ namespace AbilitySystem.Targeting
         }
         public List<IAbilityTarget> GetTargets(AbilityContext context)
         {
-            if (!context.TryGet<global::AbilitySystem.Core.TargetPoint>(out var targetPoint))
+            if (!context.TryGet<TargetPoint>(out var targetPoint))
                 return new List<IAbilityTarget>();
 
             Vector3 center = targetPoint.Value;

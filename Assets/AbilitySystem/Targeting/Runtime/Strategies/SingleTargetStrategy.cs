@@ -34,7 +34,7 @@ namespace AbilitySystem.Targeting
             }
             else
             {
-                if (context.TryGet<global::AbilitySystem.Core.TargetPoint>(out var targetPointData))
+                if (context.TryGet<TargetPoint>(out var targetPointData))
                 {
                     Vector3 targetPoint = targetPointData.Value;
                    
