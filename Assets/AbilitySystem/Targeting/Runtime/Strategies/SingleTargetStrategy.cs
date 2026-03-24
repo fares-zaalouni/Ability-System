@@ -20,22 +20,23 @@ namespace AbilitySystem.Targeting
         {
             if(IsProjectileHit)
             {
-                if(context.TryGet(ContextKeys.ProjectileHitData, out ProjectileHitData hitData))
+                if (!context.TryGet<ProjectileHitData>(out var hitData))
+                    return new List<IAbilityTarget>();
+
+                if (hitData.HitObject != null)
                 {
-                    if (hitData.HitObject != null)
+                    IAbilityTarget target = hitData.HitObject.GetComponent<IAbilityTarget>();
+                    if (target != null && target.IsTargetable())
                     {
-                        IAbilityTarget target = hitData.HitObject.GetComponent<IAbilityTarget>();
-                        if (target != null && target.IsTargetable())
-                        {
-                            return new List<IAbilityTarget> { target };
-                        }
+                        return new List<IAbilityTarget> { target };
                     }
                 }
             }
             else
             {
-                if(context.TryGet(ContextKeys.TargetPoint, out Vector3 targetPoint))
+                if (context.TryGet<global::AbilitySystem.Core.TargetPoint>(out var targetPointData))
                 {
+                    Vector3 targetPoint = targetPointData.Value;
                    
                     Collider[] hits = Physics.OverlapSphere(targetPoint, _precisionRadius, _targetLayerMask);
                     if (hits.Length > 0)

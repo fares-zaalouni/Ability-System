@@ -19,12 +19,13 @@ namespace AbilitySystem.Core
 
         public void Execute(AbilityContext context, AbilityRunner runner)
         {
-            if (!context.TryGet(ContextKeys.ProjectileSpawnPoint, out Vector3 spawnPoint))
+            if (!context.TryGet<ProjectileSpawnPoint>(out var projectileSpawnPoint))
             {
                 Debug.LogError("Failed to spawn projectile: No spawn point found.");
                 runner.Next();
                 return;
             }
+            Vector3 spawnPoint = projectileSpawnPoint.Value;
             _activeProjectile = Object.Instantiate(_projectilePrefab, spawnPoint, Quaternion.identity);
 
             // Create per-cast RuntimeSignal instances and publish them to context so that
@@ -35,28 +36,28 @@ namespace AbilitySystem.Core
             if (_projectileHitSignal != null)
             {
                 hitSignal = new RuntimeSignal();
-                context.Set(_projectileHitSignal.Id, hitSignal);
+                context.SetRuntimeSignal(_projectileHitSignal, hitSignal);
             }
 
             if (_projectileDestroySignal != null)
             {
                 destroySignal = new RuntimeSignal();
-                context.Set(_projectileDestroySignal.Id, destroySignal);
+                context.SetRuntimeSignal(_projectileDestroySignal, destroySignal);
             }
 
             _activeProjectile.OnHit += hitData =>
             {
-                context.Set(ContextKeys.ProjectileHitData, hitData);
+                context.Set(hitData);
                 hitSignal?.Raise(context);
             };
             _activeProjectile.OnDestroyed += destroyData =>
             {
-                context.Set(ContextKeys.ProjectileDestroyData, destroyData);
+                context.Set(destroyData);
                 destroySignal?.Raise(context);
             };
-            if(context.TryGet(ContextKeys.ProjectileLaunchDirection, out Vector3 launchDirection))
+            if (context.TryGet<ProjectileLaunchDirection>(out var projectileLaunchDirection))
             {
-                _activeProjectile.Launch(launchDirection);
+                _activeProjectile.Launch(projectileLaunchDirection.Value);
             }
             runner.Next();
         }

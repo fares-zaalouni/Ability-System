@@ -44,9 +44,8 @@ namespace AbilitySystem.Core
             if (_waitCoroutine != null)
             {
                 CoroutineRunner.Instance.StopCoroutine(_waitCoroutine);
-                context.Set(ContextKeys.WaitElapsed, false);
-                context.Set(ContextKeys.WaitDuration, Time.time - _startTime);
-                context.Set(ContextKeys.MaxWaitDuration, _duration);
+                float elapsedDuration = Time.time - _startTime;
+                context.Set(new WaitStatus(false, elapsedDuration, _duration));
                 return true;
             }
             return false;
@@ -54,9 +53,7 @@ namespace AbilitySystem.Core
         private IEnumerator WaitThenNext(float duration, AbilityContext context, AbilityRunner runner)
         {
             yield return new WaitForSeconds(duration);
-            context.Set(ContextKeys.WaitElapsed, true);
-            context.Set(ContextKeys.WaitDuration, duration);
-            context.Set(ContextKeys.MaxWaitDuration, duration);
+            context.Set(new WaitStatus(true, duration, duration));
             runner.Next();
         }
     }

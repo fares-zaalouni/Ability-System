@@ -15,11 +15,10 @@ namespace AbilitySystem.Targeting
         }
         public List<IAbilityTarget> GetTargets(AbilityContext context)
         {
-            if(!context.TryGet(ContextKeys.AOECenter, out Vector3 center))
-            {
-                Debug.LogError("AOECircleStrategy requires an AOECenter in the context.");
+            if (!context.TryGet<global::AbilitySystem.Core.TargetPoint>(out var targetPoint))
                 return new List<IAbilityTarget>();
-            }
+
+            Vector3 center = targetPoint.Value;
 
             Collider[] colliders = Physics.OverlapSphere(center, _radius, _targetLayerMask);
             List<IAbilityTarget> targets = new List<IAbilityTarget>();

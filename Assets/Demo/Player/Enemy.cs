@@ -8,8 +8,7 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour,
 IAbilityTarget,
-IDamageable,
-ICaster
+IDamageable
 {
     [SerializeField] private List<ResourceDefinition> _resourceDefinitions = new List<ResourceDefinition>();
     private Dictionary<string, IResource> _resources = new Dictionary<string, IResource>();
@@ -51,28 +50,4 @@ ICaster
         // Add death logic here (e.g., play animation, drop loot, etc.)
     }
 
-    public bool CanConsumeCost(IReadOnlyCollection<Cost> costs)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void ConsumeCost(IReadOnlyCollection<Cost> costs)
-    {
-        throw new NotImplementedException();
-    }
-
-    public bool TryGetResource(string resourceName, out IResource resource)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void GrantAbility(AbilityDefinition abilityDefinition)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void RemoveAbility(AbilityDefinition abilityDefinition)
-    {
-        throw new NotImplementedException();
-    }
 }

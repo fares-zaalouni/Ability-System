@@ -37,10 +37,7 @@ namespace AbilitySystem.Core
                 }
             }
 
-            context.Set(ContextKeys.EffectApplyTotalTargets, totalTargets);
-            context.Set(ContextKeys.EffectApplyAppliedCount, appliedCount);
-            context.Set(ContextKeys.EffectApplySkippedCount, skippedCount);
-            context.Set(ContextKeys.EffectApplyFailedCount, failedCount);
+            context.Set(new global::AbilitySystem.Core.EffectApplySummary(totalTargets, appliedCount, skippedCount, failedCount));
 
             if (Debug.isDebugBuild && totalTargets > 0 && appliedCount == 0)
             {

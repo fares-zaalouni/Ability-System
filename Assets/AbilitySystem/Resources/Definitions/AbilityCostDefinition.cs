@@ -1,5 +1,4 @@
 using AbilitySystem.Resources;
-using Unity.Mathematics;
 using UnityEngine;
 
 namespace AbilitySystem.Costs
@@ -9,9 +8,9 @@ namespace AbilitySystem.Costs
     {
         [SerializeField] private float _amount;
         [SerializeField] private ResourceDefinition _resourceCost;
-        public Cost CreateRuntimeCost()
+        public AbilityCost CreateRuntimeCost()
         {
-            return new Cost(_resourceCost.ResourceName, _amount);
+            return new AbilityCost(_resourceCost.ResourceName, _amount);
         }
     }
 }

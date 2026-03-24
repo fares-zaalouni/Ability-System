@@ -71,7 +71,7 @@ namespace AbilitySystem.Core
             if (_coroutine != null)
             {
                 CoroutineRunner.Instance.StopCoroutine(_coroutine);
-                context.Set(ContextKeys.RepeatTickedTimes, _tickedTimes);
+                context.Set(new RepeatTickCount(_tickedTimes));
                 return true;
             }
             return false;
@@ -82,7 +82,7 @@ namespace AbilitySystem.Core
             float elapsed = 0f;
             while (elapsed < duration)
             {
-                AbilityRunner subRunner = new AbilityRunner(_actions, context);
+                AbilityRunner subRunner = new AbilityRunner(_actions, context.Fork());
 
                 Action onCancelled = () =>
                 {

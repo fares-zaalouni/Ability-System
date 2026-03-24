@@ -42,12 +42,12 @@ namespace AbilitySystem.Core
         {
             _mainRunner = runner;
 
-            if (context.TryGet<RuntimeSignal>(_triggerSignal.Id, out _triggerRuntimeSignal))
+            if (context.TryGetRuntimeSignal(_triggerSignal, out _triggerRuntimeSignal))
                 _triggerRuntimeSignal.Subscribe(OnTriggerSignalRaised);
             else
                 SignalBus.Subscribe(_triggerSignal, OnTriggerSignalRaised);
 
-            if (context.TryGet<RuntimeSignal>(_exitSignal.Id, out _exitRuntimeSignal))
+            if (context.TryGetRuntimeSignal(_exitSignal, out _exitRuntimeSignal))
                 _exitRuntimeSignal.Subscribe(OnExitSignalRaised);
             else
                 SignalBus.Subscribe(_exitSignal, OnExitSignalRaised);

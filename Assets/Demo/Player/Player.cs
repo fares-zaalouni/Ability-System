@@ -18,6 +18,7 @@ IAbilityTarget
     private Dictionary<string, IResource> _resources = new Dictionary<string, IResource>();
     private Dictionary<string, AbilityInstance> _abilities = new Dictionary<string, AbilityInstance>();
     bool _casted = false;
+    private Dictionary<AbilityDefinition, Action<AbilityContext>[]> _castCompleteCallbacks = new Dictionary<AbilityDefinition, Action<AbilityContext>[]>();
     WeakReference<AbilityCast> _currentCast;
 
     void Awake()
@@ -47,12 +48,12 @@ IAbilityTarget
         {
             if (_abilities.TryGetValue("fireball", out var abilityInstance))
             {
-                var initialBlackboard = new Dictionary<string, object>
+                var initialDependencies = new List<object>
                 {
-                    { ContextKeys.ProjectileLaunchDirection, transform.forward },
-                    { ContextKeys.ProjectileSpawnPoint, transform.position + transform.forward * 1.5f }
+                    new ProjectileLaunchDirection(transform.forward),
+                    new ProjectileSpawnPoint(transform.position + transform.forward * 1.5f)
                 };
-                abilityInstance.Cast(out _currentCast, initialBlackboard);
+                abilityInstance.Cast(out _currentCast, initialDependencies);
                 if(_currentCast.TryGetTarget(out var cast))
                 {
                     cast.OnCompleted += (ctx) => Debug.Log("Fireball cast completed!");
@@ -74,30 +75,30 @@ IAbilityTarget
         }
     }
 
-    public bool CanConsumeCost(Cost cost)
+    public bool CanConsumeCost(AbilityCost cost)
     {
         if (_resources.TryGetValue(cost.resourceName, out var resource))
         {
-            return resource.CanConsume(cost.amount);
+            return resource.CanConsume(cost.cost);
         }
         Debug.Log("Resource not found: " + cost.resourceName);
         return false;
     }
 
-    public bool CanConsumeCost(IReadOnlyCollection<Cost> costs)
+    public bool CanConsumeCost(IReadOnlyCollection<AbilityCost> costs)
     {
         return costs.All(cost => CanConsumeCost(cost));
     }
 
-    public void ConsumeCost(Cost cost)
+    public void ConsumeCost(AbilityCost cost)
     {
         if (CanConsumeCost(cost))
         {
-            _resources[cost.resourceName].Consume(cost.amount);
+            _resources[cost.resourceName].Consume(cost.cost);
         }
     }
 
-    public void ConsumeCost(IReadOnlyCollection<Cost> costs)
+    public void ConsumeCost(IReadOnlyCollection<AbilityCost> costs)
     {
         Debug.Log($"Attempting to consume costs for ability:");
         Debug.Log($"Resource before:");
@@ -109,7 +110,7 @@ IAbilityTarget
         {
             foreach (var cost in costs)
             {
-                Debug.Log($"Consuming {cost.amount} of {cost.resourceName}");
+                Debug.Log($"Consuming {cost.cost} of {cost.resourceName}");
                 ConsumeCost(cost);
             }
         }
@@ -139,13 +140,15 @@ IAbilityTarget
             return;
         }
         var abilityInstance = new AbilityInstance(abilityDefinition, this, this);
+        var callbacks = new Action<AbilityContext>[3];
+        callbacks[0] = (ctx) => Debug.Log($"{abilityDefinition.AbilityName} cast completed!");
+        callbacks[1] = (ctx) => Debug.Log($"{abilityDefinition.AbilityName} cast cancelled!");
+        callbacks[2] = (ctx) => Debug.Log($"{abilityDefinition.AbilityName} cast interrupted!");
+        _castCompleteCallbacks[abilityDefinition] = callbacks;
          _abilities.Add(abilityDefinition.AbilityName, abilityInstance);
-            SignalBus.Subscribe(abilityDefinition.CastCompleteSignal, 
-                (ctx) => Debug.Log($"Received cast complete signal for {abilityDefinition.AbilityName}"));
-            SignalBus.Subscribe(abilityDefinition.CastCancelSignal, 
-                (ctx) => Debug.Log($"Received cast cancel signal for {abilityDefinition.AbilityName}"));
-            SignalBus.Subscribe(abilityDefinition.CastInterruptSignal, 
-                (ctx) => Debug.Log($"Received cast interrupt signal for {abilityDefinition.AbilityName}"));
+            SignalBus.Subscribe(abilityDefinition.CastCompleteSignal, callbacks[0]);
+            SignalBus.Subscribe(abilityDefinition.CastCancelSignal, callbacks[1]);
+            SignalBus.Subscribe(abilityDefinition.CastInterruptSignal, callbacks[2]);
         CooldownManager.Instance.RegisterCooldown(this, abilityInstance.Id, abilityInstance.Cooldown);
         Debug.Log($"Granted ability: {abilityDefinition.AbilityName}");
     }
@@ -157,6 +160,8 @@ IAbilityTarget
             var ability = _abilities[abilityDefinition.AbilityName];
             ability.Dispose();
             _abilities.Remove(abilityDefinition.AbilityName);
+            UnSubscribeAbility(abilityDefinition);
+            CooldownManager.Instance.UnregisterCooldown(this, ability.Id);
             Debug.Log($"Removed ability: {abilityDefinition.AbilityName}");
         }
         else
@@ -164,14 +169,25 @@ IAbilityTarget
             Debug.LogWarning($"Ability {abilityDefinition.AbilityName} not found.");
         }
     }
-
+    private void UnSubscribeAbility(AbilityDefinition abilityDefinition)
+    {
+        if (_castCompleteCallbacks.TryGetValue(abilityDefinition, out var callbacks))
+        {
+            SignalBus.Unsubscribe(abilityDefinition.CastCompleteSignal, callbacks[0]);
+            SignalBus.Unsubscribe(abilityDefinition.CastCancelSignal, callbacks[1]);
+            SignalBus.Unsubscribe(abilityDefinition.CastInterruptSignal, callbacks[2]);
+            _castCompleteCallbacks.Remove(abilityDefinition);
+        }
+    }
     private void Dispose()
     {
         foreach (var ability in _abilities.Values)
         {
+            UnSubscribeAbility(ability.Definition);
             ability.Dispose();
         }
         _abilities.Clear();
+        _castCompleteCallbacks.Clear();
     }
 
     public void OnDestroy()
