@@ -1,7 +1,7 @@
 using System.Collections.Generic;
+using AbilitySystem.Attributes;
 using UnityEngine;
-using AbilitySystem.Resources;
-using AbilitySystem.Costs;
+
 
 namespace AbilitySystem.Core
 {

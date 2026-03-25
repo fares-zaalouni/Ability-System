@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33a9909bce983da4597bfcfc93c924df, type: 3}
   m_Name: ManaResource
   m_EditorClassIdentifier: Assembly-CSharp::AbilitySystem.Resources.ManaResourceDefinition
-  ResourceName: mana
+  _attributeName: mana
   _maxAmount: 100
-  _regenAmount: 1
+  _initialAmount: 100

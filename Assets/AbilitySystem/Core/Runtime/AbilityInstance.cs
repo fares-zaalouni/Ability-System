@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
-using AbilitySystem.Resources;
 using System;
 using AbilitySystem.Utility;
-using AbilitySystem.Costs;
+using AbilitySystem.Attributes;
 
 namespace AbilitySystem.Core
 {
@@ -14,13 +13,13 @@ namespace AbilitySystem.Core
         private List<AbilityCost> _costs;
         private List<AbilityCast> _casts; 
         private Dictionary<AbilityCast, Action<AbilityContext>> _castCompletionCallbacks = new Dictionary<AbilityCast, Action<AbilityContext>>();   
-        private IResourceBearer _resourceBearer;
+        private IAttibuteBearer _resourceBearer;
         private ICaster _caster;
         public Cooldown Cooldown { get; private set; }
         public Guid Id { get; } = Guid.NewGuid();
 
 
-        public AbilityInstance(AbilityDefinition definition, ICaster caster, IResourceBearer resourceBearer = null)
+        public AbilityInstance(AbilityDefinition definition, ICaster caster, IAttibuteBearer resourceBearer = null)
         {
             if (definition == null)
             {

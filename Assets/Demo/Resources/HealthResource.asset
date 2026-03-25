@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33a9909bce983da4597bfcfc93c924df, type: 3}
   m_Name: HealthResource
   m_EditorClassIdentifier: Assembly-CSharp::AbilitySystem.Resources.BaseResourceDefinition
-  ResourceName: Health
+  _attributeName: health
   _maxAmount: 1000
-  _regenAmount: 0
+  _initialAmount: 700

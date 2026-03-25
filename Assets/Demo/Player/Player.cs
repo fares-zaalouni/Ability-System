@@ -1,21 +1,22 @@
 using System.Collections.Generic;
 using System.Linq;
 using AbilitySystem.Core;
-using AbilitySystem.Resources;
-using AbilitySystem.Effects;
 using AbilitySystem.Targeting;
 using UnityEngine;
-using AbilitySystem;
 using System;
+using AbilitySystem.Attributes;
 
+using Attribute = AbilitySystem.Attributes.Attribute;
 public class Player : MonoBehaviour, 
 ICaster,
-IResourceBearer, 
+IAttibuteBearer, 
 IAbilityTarget
 {
-    [SerializeField] private List<ResourceDefinition> _resourceDefinitions = new List<ResourceDefinition>();
+    [SerializeField] private ConsumableAttributeDefinition _healthAttributeDefinition;
+    [SerializeField] private ConsumableAttributeDefinition _manaAttributeDefinition;
+    private Dictionary<string, Attribute> _attributes = new Dictionary<string, Attribute>();
     [SerializeField] private List<AbilityDefinition> _abilityDefinitions = new List<AbilityDefinition>();
-    private Dictionary<string, IResource> _resources = new Dictionary<string, IResource>();
+
     private Dictionary<string, AbilityInstance> _abilities = new Dictionary<string, AbilityInstance>();
     bool _casted = false;
     private Dictionary<AbilityDefinition, Action<AbilityContext>[]> _castCompleteCallbacks = new Dictionary<AbilityDefinition, Action<AbilityContext>[]>();
@@ -23,23 +24,20 @@ IAbilityTarget
 
     void Awake()
     {
-        RegisterResources();
+        RegisterAttribute();
         foreach (var abilityDef in _abilityDefinitions)
         {
             GrantAbility(abilityDef);
         }
     }
-    public void RegisterResources()
+    public void RegisterAttribute()
     {
-        foreach (var resourceDef in _resourceDefinitions)
-        {
-            var runtimeResource = resourceDef.CreateRuntimeResource();
-            _resources.Add(runtimeResource.Name, runtimeResource);
-            foreach(var resource in _resources.Values)
-            {
-                Debug.Log($"Initialized resource: {resource.Name} with MaxAmount: {resource.MaxAmount}");
-            }
-        }
+        var healthResource = _healthAttributeDefinition.CreateRuntimeResource();
+        var manaResource = _manaAttributeDefinition.CreateRuntimeResource();
+        _attributes.Add(_healthAttributeDefinition.AttributeType, healthResource);
+        _attributes.Add(_manaAttributeDefinition.AttributeType, manaResource);
+        Debug.Log($"Initialized resource: {healthResource.Name} with MaxAmount: {healthResource.CalculatedMaxValue} and CurrentAmount: {healthResource.CalculatedValue}");
+        Debug.Log($"Initialized resource: {manaResource.Name} with MaxAmount: {manaResource.CalculatedMaxValue} and CurrentAmount: {manaResource.CalculatedValue}");
     }
 
     void Update()
@@ -77,11 +75,11 @@ IAbilityTarget
 
     public bool CanConsumeCost(AbilityCost cost)
     {
-        if (_resources.TryGetValue(cost.resourceName, out var resource))
+        if (_attributes.TryGetValue(cost.attributeName, out var resource) && resource is IConsumableAttribute consumableResource)
         {
-            return resource.CanConsume(cost.cost);
+            return consumableResource.CanConsume(cost.cost);
         }
-        Debug.Log("Resource not found: " + cost.resourceName);
+        Debug.Log("Resource not found: " + cost.attributeName);
         return false;
     }
 
@@ -94,7 +92,11 @@ IAbilityTarget
     {
         if (CanConsumeCost(cost))
         {
-            _resources[cost.resourceName].Consume(cost.cost);
+            if (_attributes.TryGetValue(cost.attributeName, out var resource) && resource is IConsumableAttribute consumableResource)
+            {
+                Debug.Log($"Consuming {cost.cost} of {resource.Name}");
+                consumableResource.Consume(cost.cost);
+            }
         }
     }
 
@@ -102,22 +104,21 @@ IAbilityTarget
     {
         Debug.Log($"Attempting to consume costs for ability:");
         Debug.Log($"Resource before:");
-        foreach (var resource in _resources.Values)
+        foreach (var resource in _attributes.Values)
         {
-            Debug.Log($"- {resource.Name}: {resource.MaxAmount}");
+            Debug.Log($"- {resource.Name}: {resource.CalculatedMaxValue}");
         }
         if (CanConsumeCost(costs))
         {
             foreach (var cost in costs)
             {
-                Debug.Log($"Consuming {cost.cost} of {cost.resourceName}");
                 ConsumeCost(cost);
             }
         }
         Debug.Log($"Finished consuming costs. Current Resources:");
-        foreach (var resource in _resources.Values)
+        foreach (var resource in _attributes.Values)
         {
-            Debug.Log($"- {resource.Name}: {resource.MaxAmount}");
+            Debug.Log($"- {resource.Name}: {resource.CalculatedMaxValue}");
         }
     }
 
@@ -126,10 +127,10 @@ IAbilityTarget
         return true;
     }
 
-    public bool TryGetResource(string resourceName, out IResource resource)
+    public bool TryGetAttribute(string resourceName, out Attribute attribute)
     {
         Debug.Log($"Trying to get resource: {resourceName}");
-        return _resources.TryGetValue(resourceName, out resource);
+        return _attributes.TryGetValue(resourceName, out attribute);
     }
 
     public void GrantAbility(AbilityDefinition abilityDefinition)

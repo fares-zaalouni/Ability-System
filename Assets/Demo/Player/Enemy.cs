@@ -1,32 +1,25 @@
 using System;
 using System.Collections.Generic;
+using AbilitySystem.Attributes;
 using AbilitySystem.Core;
-using AbilitySystem.Effects;
-using AbilitySystem.Resources;
 using AbilitySystem.Targeting;
 using UnityEngine;
 
+using Attribute = AbilitySystem.Attributes.Attribute;
 public class Enemy : MonoBehaviour,
 IAbilityTarget,
 IDamageable
 {
-    [SerializeField] private List<ResourceDefinition> _resourceDefinitions = new List<ResourceDefinition>();
-    private Dictionary<string, IResource> _resources = new Dictionary<string, IResource>();
+    [SerializeField] private ConsumableAttributeDefinition _healthAttributeDefinition;
+    private ConsumableAttribute _healthAttribute;
+    
     void Awake()
     {
         RegisterResources();
     }
     public void RegisterResources()
     {
-        foreach (var resourceDef in _resourceDefinitions)
-        {
-            var runtimeResource = resourceDef.CreateRuntimeResource();
-            _resources.Add(runtimeResource.Name, runtimeResource);
-            foreach(var resource in _resources.Values)
-            {
-                Debug.Log($"Initialized resource: {resource.Name} with MaxAmount: {resource.MaxAmount}");
-            }
-        }
+        _healthAttribute = (ConsumableAttribute)_healthAttributeDefinition.CreateRuntimeResource();
     }
     public bool IsTargetable()
     {
@@ -34,11 +27,11 @@ IDamageable
     }
     public void TakeDamage(float amount, ICaster source = null)
     {
-        if (_resources.TryGetValue("Health", out var healthResource))
+        if (_healthAttribute != null)
         {
-            healthResource.Consume(amount); 
-            Debug.Log($"{name} took {amount} damage. Remaining Health: {healthResource.CurrentAmount}");
-            if (healthResource.CurrentAmount <= 0)
+            _healthAttribute.Consume(amount);
+            Debug.Log($"{name} took {amount} damage. Remaining Health: {_healthAttribute.CurrentAmount}");
+            if (_healthAttribute.CurrentAmount <= 0)
             {
                 Die();
             }

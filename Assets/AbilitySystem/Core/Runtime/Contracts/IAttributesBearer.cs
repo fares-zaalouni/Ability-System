@@ -1,13 +1,13 @@
 using System.Collections.Generic;
-using AbilitySystem.Resources;
+using AbilitySystem.Attributes;
 
 namespace AbilitySystem.Core
 {
-    public interface IResourceBearer
+    public interface IAttibuteBearer
     {
         public bool CanConsumeCost(IReadOnlyCollection<AbilityCost> costs);
         public void ConsumeCost(IReadOnlyCollection<AbilityCost> costs);
-        public bool TryGetResource(string resourceName, out IResource resource);
-        public void RegisterResources();
+        public bool TryGetAttribute(string attributeName, out Attribute attribute);
+        public void RegisterAttribute();
     }
 }

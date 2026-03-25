@@ -274,8 +274,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5496e567249554645950674ead09c22f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player
-  _resourceDefinitions:
-  - {fileID: 11400000, guid: 647c17ec548b11c409082c9c076dd5b7, type: 2}
+  _healthAttributeDefinition: {fileID: 11400000, guid: 9c25155f72bc43a4c9ec14ace200e500, type: 2}
+  _manaAttributeDefinition: {fileID: 11400000, guid: 647c17ec548b11c409082c9c076dd5b7, type: 2}
   _abilityDefinitions:
   - {fileID: 11400000, guid: fe7c6ae59f7b1c84c84b1bfe3e2033db, type: 2}
 --- !u!1 &641961407
@@ -310,8 +310,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd5062e2ddaddfd4d953ee7043d5a8a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
-  _resourceDefinitions:
-  - {fileID: 11400000, guid: 9c25155f72bc43a4c9ec14ace200e500, type: 2}
+  _healthAttributeDefinition: {fileID: 11400000, guid: 9c25155f72bc43a4c9ec14ace200e500, type: 2}
 --- !u!135 &641961409
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -530,8 +529,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd5062e2ddaddfd4d953ee7043d5a8a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
-  _resourceDefinitions:
-  - {fileID: 11400000, guid: 9c25155f72bc43a4c9ec14ace200e500, type: 2}
+  _healthAttributeDefinition: {fileID: 0}
 --- !u!1 &1072527273
 GameObject:
   m_ObjectHideFlags: 0
@@ -921,8 +919,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd5062e2ddaddfd4d953ee7043d5a8a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
-  _resourceDefinitions:
-  - {fileID: 11400000, guid: 9c25155f72bc43a4c9ec14ace200e500, type: 2}
+  _healthAttributeDefinition: {fileID: 11400000, guid: 9c25155f72bc43a4c9ec14ace200e500, type: 2}
 --- !u!135 &1978637545
 SphereCollider:
   m_ObjectHideFlags: 0

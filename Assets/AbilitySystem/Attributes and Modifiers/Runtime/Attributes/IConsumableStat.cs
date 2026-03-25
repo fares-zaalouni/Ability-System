@@ -1,6 +1,6 @@
-namespace AbilitySystem.Resources
+namespace AbilitySystem.Attributes
 {
-    public interface IResource
+    public interface IConsumableAttribute
     {
         public float MaxAmount { get; }
         public float CurrentAmount {get;}

@@ -1,4 +1,4 @@
-using AbilitySystem.Resources;
+using AbilitySystem.Attributes;
 using UnityEngine;
 
 namespace AbilitySystem.Core
@@ -8,23 +8,23 @@ namespace AbilitySystem.Core
         Max,
         Current
     }
-    [CreateAssetMenu(fileName = "ResourceThresholdConditionDefinition", menuName = "Ability System/Conditions/Resource Threshold")]
-    public class ResourceThresholdConditionDefinition : ConditionDefinition
+    [CreateAssetMenu(fileName = "AttributeThresholdConditionDefinition", menuName = "Ability System/Conditions/Attribute Threshold")]
+    public class AttributeThresholdConditionDefinition : ConditionDefinition
     {
-        [SerializeField] private ResourceDefinition _resourceDefinition;
+        [SerializeField] private AttributeDefinition _attributeDefinition;
         [SerializeField] private float _threshold;
         [SerializeField] private ResourceValueType _valueType = ResourceValueType.Current;
 
         public override bool Evaluate(AbilityContext context)
         {
-            IResourceBearer resourceBearer = context.Caster as IResourceBearer;
+            IAttibuteBearer resourceBearer = context.Caster as IAttibuteBearer;
             if (resourceBearer == null)
             {
-                Debug.LogError("ResourceThresholdConditionDefinition can only be evaluated on casters that implement IResourceBearer.");
+                Debug.LogError("AttributeThresholdConditionDefinition can only be evaluated on casters that implement IAttibuteBearer.");
                 return false;
             }
 
-            var hasResource = resourceBearer.TryGetResource(_resourceDefinition.ResourceName, out var resource);
+            var hasResource = resourceBearer.TryGetAttribute(_attributeDefinition.AttributeType, out var resource);
 
             if(!hasResource)
             {
@@ -33,9 +33,9 @@ namespace AbilitySystem.Core
             switch (_valueType)
             {
                 case ResourceValueType.Max:
-                    return resource != null && resource.MaxAmount >= _threshold;
+                    return resource != null && resource.CalculatedMaxValue >= _threshold;
                 case ResourceValueType.Current:
-                    return resource != null && resource.CurrentAmount >= _threshold;
+                    return resource != null && resource.CalculatedValue >= _threshold;
                 default:
                     throw new System.ArgumentOutOfRangeException(nameof(_valueType), _valueType, null);
             }

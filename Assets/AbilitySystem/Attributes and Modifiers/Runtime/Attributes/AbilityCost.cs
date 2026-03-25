@@ -1,15 +1,15 @@
-namespace AbilitySystem.Resources
+namespace AbilitySystem.Attributes
 {
     [System.Serializable]
     public struct AbilityCost
     {
-        public string resourceName;
+        public string attributeName;
         private float originalCost;
         public float cost;
 
         public AbilityCost(string resourceName, float amount)
         {
-            this.resourceName = resourceName;
+            this.attributeName = resourceName;
             originalCost = amount;
             cost = amount;
         }
