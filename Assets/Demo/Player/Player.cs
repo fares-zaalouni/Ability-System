@@ -9,7 +9,7 @@ using AbilitySystem.Attributes;
 using Attribute = AbilitySystem.Attributes.Attribute;
 public class Player : MonoBehaviour, 
 ICaster,
-IAttibuteBearer, 
+IAttributeBearer, 
 IAbilityTarget
 {
     [SerializeField] private ConsumableAttributeDefinition _healthAttributeDefinition;

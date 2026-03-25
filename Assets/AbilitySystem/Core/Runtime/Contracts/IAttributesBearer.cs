@@ -3,7 +3,7 @@ using AbilitySystem.Attributes;
 
 namespace AbilitySystem.Core
 {
-    public interface IAttibuteBearer
+    public interface IAttributeBearer
     {
         public bool CanConsumeCost(IReadOnlyCollection<AbilityCost> costs);
         public void ConsumeCost(IReadOnlyCollection<AbilityCost> costs);

@@ -13,13 +13,13 @@ namespace AbilitySystem.Core
         private List<AbilityCost> _costs;
         private List<AbilityCast> _casts; 
         private Dictionary<AbilityCast, Action<AbilityContext>> _castCompletionCallbacks = new Dictionary<AbilityCast, Action<AbilityContext>>();   
-        private IAttibuteBearer _resourceBearer;
+        private IAttributeBearer _resourceBearer;
         private ICaster _caster;
         public Cooldown Cooldown { get; private set; }
         public Guid Id { get; } = Guid.NewGuid();
 
 
-        public AbilityInstance(AbilityDefinition definition, ICaster caster, IAttibuteBearer resourceBearer = null)
+        public AbilityInstance(AbilityDefinition definition, ICaster caster, IAttributeBearer resourceBearer = null)
         {
             if (definition == null)
             {

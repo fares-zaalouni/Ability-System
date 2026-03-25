@@ -17,7 +17,7 @@ namespace AbilitySystem.Core
 
         public override bool Evaluate(AbilityContext context)
         {
-            IAttibuteBearer resourceBearer = context.Caster as IAttibuteBearer;
+            IAttributeBearer resourceBearer = context.Caster as IAttributeBearer;
             if (resourceBearer == null)
             {
                 Debug.LogError("AttributeThresholdConditionDefinition can only be evaluated on casters that implement IAttibuteBearer.");
