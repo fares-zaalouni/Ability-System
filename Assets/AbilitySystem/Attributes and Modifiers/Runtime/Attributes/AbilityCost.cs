@@ -3,15 +3,23 @@ namespace AbilitySystem.Attributes
     [System.Serializable]
     public struct AbilityCost
     {
-        public string attributeName;
-        private float originalCost;
-        public float cost;
+        public string costId;
+        private Attribute cost;
 
-        public AbilityCost(string resourceName, float amount)
+        public AbilityCost(string costId, float amount)
         {
-            this.attributeName = resourceName;
-            originalCost = amount;
-            cost = amount;
+            this.costId = costId;
+            cost = new Attribute(amount);
+        }
+        public float Cost => cost.RuntimeValue;
+
+        public void AddCostModifier(IModifier modifier)
+        {
+            cost.AddModifier(modifier);
+        }
+        public void RemoveCostModifier(IModifier modifier)
+        {
+            cost.RemoveModifier(modifier);
         }
     }
 }

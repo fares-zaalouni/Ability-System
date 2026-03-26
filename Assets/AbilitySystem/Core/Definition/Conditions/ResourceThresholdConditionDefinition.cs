@@ -5,15 +5,15 @@ namespace AbilitySystem.Core
 {
     enum ResourceValueType
     {
-        Max,
-        Current
+        Base,
+        Runtime
     }
     [CreateAssetMenu(fileName = "AttributeThresholdConditionDefinition", menuName = "Ability System/Conditions/Attribute Threshold")]
     public class AttributeThresholdConditionDefinition : ConditionDefinition
     {
         [SerializeField] private AttributeDefinition _attributeDefinition;
         [SerializeField] private float _threshold;
-        [SerializeField] private ResourceValueType _valueType = ResourceValueType.Current;
+        [SerializeField] private ResourceValueType _valueType = ResourceValueType.Runtime;
 
         public override bool Evaluate(AbilityContext context)
         {
@@ -32,10 +32,10 @@ namespace AbilitySystem.Core
             }
             switch (_valueType)
             {
-                case ResourceValueType.Max:
-                    return resource != null && resource.CalculatedMaxValue >= _threshold;
-                case ResourceValueType.Current:
-                    return resource != null && resource.CalculatedValue >= _threshold;
+                case ResourceValueType.Base:
+                    return resource != null && resource.BaseValue >= _threshold;
+                case ResourceValueType.Runtime:
+                    return resource != null && resource.RuntimeValue >= _threshold;
                 default:
                     throw new System.ArgumentOutOfRangeException(nameof(_valueType), _valueType, null);
             }

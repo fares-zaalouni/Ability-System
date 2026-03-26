@@ -12,14 +12,14 @@ namespace AbilitySystem.Effects
 
         public DamageEffect(float damageAmount, ICaster source)
         {
-            _damageAmount = new Attribute(damageAmount, damageAmount);
+            _damageAmount = new Attribute(damageAmount);
             _source = source;
         }
         public AbilityEffectApplyResult ApplyTo(IAbilityTarget target)
         {
             if(target is IDamageable damageable)
             {
-                damageable.TakeDamage(_damageAmount.CalculatedValue, _source);
+                damageable.TakeDamage(_damageAmount.RuntimeValue, _source);
                 return AbilityEffectApplyResult.Applied;
             }
 

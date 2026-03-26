@@ -14,7 +14,7 @@ IAbilityTarget
 {
     [SerializeField] private ConsumableAttributeDefinition _healthAttributeDefinition;
     [SerializeField] private ConsumableAttributeDefinition _manaAttributeDefinition;
-    private Dictionary<string, Attribute> _attributes = new Dictionary<string, Attribute>();
+    private Dictionary<string, ConsumableAttribute> _attributes = new Dictionary<string, ConsumableAttribute>();
     [SerializeField] private List<AbilityDefinition> _abilityDefinitions = new List<AbilityDefinition>();
 
     private Dictionary<string, AbilityInstance> _abilities = new Dictionary<string, AbilityInstance>();
@@ -32,12 +32,12 @@ IAbilityTarget
     }
     public void RegisterAttribute()
     {
-        var healthResource = _healthAttributeDefinition.CreateRuntimeResource();
-        var manaResource = _manaAttributeDefinition.CreateRuntimeResource();
+        var healthResource = _healthAttributeDefinition.CreateRuntimeConsumableAttribute();
+        var manaResource = _manaAttributeDefinition.CreateRuntimeConsumableAttribute();
         _attributes.Add(_healthAttributeDefinition.AttributeType, healthResource);
         _attributes.Add(_manaAttributeDefinition.AttributeType, manaResource);
-        Debug.Log($"Initialized resource: {healthResource.Name} with MaxAmount: {healthResource.CalculatedMaxValue} and CurrentAmount: {healthResource.CalculatedValue}");
-        Debug.Log($"Initialized resource: {manaResource.Name} with MaxAmount: {manaResource.CalculatedMaxValue} and CurrentAmount: {manaResource.CalculatedValue}");
+        Debug.Log($"Initialized resource: {healthResource.Name} with MaxAmount: {healthResource.RuntimeValue} and CurrentAmount: {healthResource.CurrentAmount}");
+        Debug.Log($"Initialized resource: {manaResource.Name} with MaxAmount: {manaResource.RuntimeValue} and CurrentAmount: {manaResource.CurrentAmount}");
     }
 
     void Update()
@@ -75,11 +75,11 @@ IAbilityTarget
 
     public bool CanConsumeCost(AbilityCost cost)
     {
-        if (_attributes.TryGetValue(cost.attributeName, out var resource) && resource is IConsumableAttribute consumableResource)
+        if (_attributes.TryGetValue(cost.costId, out var consumableAttribute))
         {
-            return consumableResource.CanConsume(cost.cost);
+            return consumableAttribute.CanConsume(cost.Cost);
         }
-        Debug.Log("Resource not found: " + cost.attributeName);
+        Debug.Log("Resource not found: " + cost.costId);
         return false;
     }
 
@@ -92,10 +92,10 @@ IAbilityTarget
     {
         if (CanConsumeCost(cost))
         {
-            if (_attributes.TryGetValue(cost.attributeName, out var resource) && resource is IConsumableAttribute consumableResource)
+            if (_attributes.TryGetValue(cost.costId, out var consumableAttribute))
             {
-                Debug.Log($"Consuming {cost.cost} of {resource.Name}");
-                consumableResource.Consume(cost.cost);
+                Debug.Log($"Consuming {cost.Cost} of {consumableAttribute.Name}");
+                consumableAttribute.Consume(cost.Cost);
             }
         }
     }
@@ -106,7 +106,7 @@ IAbilityTarget
         Debug.Log($"Resource before:");
         foreach (var resource in _attributes.Values)
         {
-            Debug.Log($"- {resource.Name}: {resource.CalculatedMaxValue}");
+            Debug.Log($"- {resource.Name}: {(resource is IConsumableAttribute consumable ? consumable.CurrentAmount : resource.RuntimeValue)}");
         }
         if (CanConsumeCost(costs))
         {
@@ -118,7 +118,7 @@ IAbilityTarget
         Debug.Log($"Finished consuming costs. Current Resources:");
         foreach (var resource in _attributes.Values)
         {
-            Debug.Log($"- {resource.Name}: {resource.CalculatedMaxValue}");
+            Debug.Log($"- {resource.Name}: {(resource is IConsumableAttribute consumable ? consumable.CurrentAmount : resource.RuntimeValue)}");
         }
     }
 
@@ -130,7 +130,9 @@ IAbilityTarget
     public bool TryGetAttribute(string resourceName, out Attribute attribute)
     {
         Debug.Log($"Trying to get resource: {resourceName}");
-        return _attributes.TryGetValue(resourceName, out attribute);
+        var found = _attributes.TryGetValue(resourceName, out var attr);
+        attribute = attr;
+        return found;
     }
 
     public void GrantAbility(AbilityDefinition abilityDefinition)

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace AbilitySystem.Attributes
 {
@@ -8,41 +9,22 @@ namespace AbilitySystem.Attributes
         public string Name { get; protected set; }
 
         protected float _base;
-        protected float _baseMax;
         protected float _runtime;
-        protected float _runtimeMax;
 
         public float BaseValue => _base;
-        public float BaseMaxValue => _baseMax;
-        public float CalculatedValue => _runtime;
-        public float CalculatedMaxValue => _runtimeMax;
+        public float RuntimeValue => _runtime;
 
         private List<IModifier> _modifiers = new List<IModifier>();
-        public Attribute(float baseValue, float baseMaxValue, string name = "-No Name-")
+        public Attribute(float baseValue, string name = "-No Name-")
         {
             Name = name;
             _base = baseValue;
-            _baseMax = baseMaxValue;
             _runtime = baseValue;
-            _runtimeMax = baseMaxValue;
         }
 
         public void SetBaseValue(float newValue)
         {
             _base = newValue;
-            RecalculateRuntimeValues();
-        }
-
-        public void SetBaseMaxValue(float newValue)
-        {
-            _baseMax = newValue;
-            RecalculateRuntimeValues();
-        }
-
-        public void SetBaseValues(float newValue, float newMaxValue)
-        {
-            _base = newValue;
-            _baseMax = newMaxValue;
             RecalculateRuntimeValues();
         }
 
@@ -52,35 +34,9 @@ namespace AbilitySystem.Attributes
             RecalculateRuntimeValues();
         }
 
-        public void IncreaseBaseMaxValue(float amount)
-        {
-            _baseMax += amount;
-            RecalculateRuntimeValues();
-        }
-
-        public void IncreaseBaseValues(float amount, float maxAmount)
-        {
-            _base += amount;
-            _baseMax += maxAmount;
-            RecalculateRuntimeValues();
-        }
-
         public void DecreaseBaseValue(float amount)
         {
             _base -= amount;
-            RecalculateRuntimeValues();
-        }
-
-        public void DecreaseBaseMaxValue(float amount)
-        {
-            _baseMax -= amount;
-            RecalculateRuntimeValues();
-        }
-
-        public void DecreaseBaseValues(float amount, float maxAmount)
-        {
-            _base -= amount;
-            _baseMax -= maxAmount;
             RecalculateRuntimeValues();
         }
         
@@ -103,7 +59,6 @@ namespace AbilitySystem.Attributes
         private void RecalculateRuntimeValues()
         {
             _runtime = _base;
-            _runtimeMax = _baseMax;
             foreach (var modifier in _modifiers)
             {
                 modifier.Apply(this);
@@ -114,5 +69,15 @@ namespace AbilitySystem.Attributes
         {
             return _runtime - _base;
         }
+
+        public void AddToRuntime(float amount)
+        {
+            _runtime += amount;
+        }
+        public void SubtractFromRuntime(float amount)
+        {
+            _runtime -= amount;
+        }
+
     }
 }

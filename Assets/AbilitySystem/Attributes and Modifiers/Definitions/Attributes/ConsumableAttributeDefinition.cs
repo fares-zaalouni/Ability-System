@@ -5,10 +5,14 @@ namespace AbilitySystem.Attributes
     [CreateAssetMenu(fileName = "ConsumableAttribute", menuName = "Ability System/Attributes/Consumable Attribute")]
     public class ConsumableAttributeDefinition : AttributeDefinition
     {
-        public override string AttributeType => GetInstanceID().ToString();
-        public override Attribute CreateRuntimeResource()
+        public ConsumableAttribute CreateRuntimeConsumableAttribute()
         {
-            return new ConsumableAttribute(_attributeName, _initialAmount, _maxAmount);
+            return new ConsumableAttribute(_attributeName, _initialAmount);
+        }
+
+        public override Attribute CreateRuntimeAttribute()
+        {
+            return CreateRuntimeConsumableAttribute();
         }
     }
 }

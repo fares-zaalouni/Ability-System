@@ -19,7 +19,7 @@ IDamageable
     }
     public void RegisterResources()
     {
-        _healthAttribute = (ConsumableAttribute)_healthAttributeDefinition.CreateRuntimeResource();
+        _healthAttribute = _healthAttributeDefinition.CreateRuntimeConsumableAttribute();
     }
     public bool IsTargetable()
     {

@@ -5,13 +5,18 @@ namespace AbilitySystem.Attributes
     public abstract class AttributeDefinition : ScriptableObject
     {
         [SerializeField] protected string _attributeName;
-        [SerializeField] protected float _maxAmount;
         [SerializeField] protected float _initialAmount;
-        public abstract string AttributeType { get; }
-        public string Id => GetInstanceID().ToString();
-        public virtual Attribute CreateRuntimeResource()
+        [SerializeField, HideInInspector] private string _id;
+        public string AttributeType => _id;
+
+        private void OnValidate()
         {
-            return new Attribute(_initialAmount, _maxAmount,  _attributeName !=""? _attributeName : "-No Name-");
+            if (string.IsNullOrEmpty(_id))
+                _id = System.Guid.NewGuid().ToString();
+        }
+        public virtual Attribute CreateRuntimeAttribute()
+        {
+            return new Attribute(_initialAmount, _attributeName != "" ? _attributeName : "-No Name-");
         }
     }
 }
