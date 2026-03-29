@@ -10,7 +10,7 @@ namespace AbilitySystem.Core
     {
         [SerializeField] public string AbilityName;
         [SerializeField] public float Cooldown;
-        [SerializeField] public List<AbilityCostDefinition> Costs;
+        [SerializeField] public List<AttributeDefinition> Costs;
         [SerializeField] public List<AbilityActionDefinition> ActionDefinitions;
         [SerializeField] public SignalDefinition CastCompleteSignal;
         [SerializeField] public SignalDefinition CastCancelSignal;

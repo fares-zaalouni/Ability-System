@@ -8,9 +8,9 @@ namespace AbilitySystem.Effects
     {
         public float damageAmount;
 
-        public override IAbilityEffect CreateEffect(ICaster source)
+        public override IAbilityEffect CreateEffect(AbilityContext context)
         {
-            return new DamageEffect(damageAmount, source);
+            return new DamageEffect(damageAmount, _modifiers.ConvertAll(m => m.CreateRuntimeModifier()), context);
         }
     }
 }

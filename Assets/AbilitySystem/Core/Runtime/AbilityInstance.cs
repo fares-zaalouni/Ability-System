@@ -6,20 +6,21 @@ using AbilitySystem.Attributes;
 
 namespace AbilitySystem.Core
 {
+    using Attribute = AbilitySystem.Attributes.Attribute;
     public class AbilityInstance
     {
         private AbilityDefinition _definition;
         public AbilityDefinition Definition => _definition;
-        private List<AbilityCost> _costs;
+        private List<Attribute> _costs;
         private List<AbilityCast> _casts; 
         private Dictionary<AbilityCast, Action<AbilityContext>> _castCompletionCallbacks = new Dictionary<AbilityCast, Action<AbilityContext>>();   
-        private IAttributeBearer _resourceBearer;
+        private IAttributeHolder _resourceBearer;
         private ICaster _caster;
         public Cooldown Cooldown { get; private set; }
         public Guid Id { get; } = Guid.NewGuid();
 
 
-        public AbilityInstance(AbilityDefinition definition, ICaster caster, IAttributeBearer resourceBearer = null)
+        public AbilityInstance(AbilityDefinition definition, ICaster caster, IAttributeHolder resourceBearer = null)
         {
             if (definition == null)
             {
@@ -29,9 +30,9 @@ namespace AbilitySystem.Core
             if(definition.Costs == null)
             {
                 AbilityDebug.LogError($"AbilityInstance: Costs list is null in AbilityDefinition {definition.AbilityName}.");
-                definition.Costs = new List<AbilityCostDefinition>();
+                definition.Costs = new List<AttributeDefinition>();
             }    
-            _costs = new List<AbilityCost>();
+            _costs = new List<Attribute>();
             _casts = new List<AbilityCast>();
 
             foreach (var costDef in definition.Costs)
@@ -42,7 +43,7 @@ namespace AbilitySystem.Core
                     continue;
                 }
 
-                _costs.Add(costDef.CreateRuntimeCost());
+                _costs.Add(costDef.CreateRuntimeAttribute());
             }
 
             _definition = definition;

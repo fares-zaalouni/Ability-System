@@ -12,4 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 89fd4bf691e516344b1680e83f85a65e, type: 3}
   m_Name: FireBall_DamageEffectDefinition
   m_EditorClassIdentifier: Assembly-CSharp::DamageEffectDefinition
+  _modifiers:
+  - {fileID: 11400000, guid: d53b708cb7e114445b341717245ef394, type: 2}
+  - {fileID: 11400000, guid: 5bf562c4c9d6a41489770fde55499148, type: 2}
   damageAmount: 50

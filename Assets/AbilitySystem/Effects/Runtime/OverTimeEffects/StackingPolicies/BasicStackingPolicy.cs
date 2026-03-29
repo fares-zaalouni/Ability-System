@@ -43,14 +43,14 @@ namespace AbilitySystem.Effects
                 switch (_stackingBehavior)
                 {
                     case StackingBehavior.StackAll:
-                        if(!existingEffects.TryAddStacksBySource(newEffect.Source, newEffect.Stacks))
+                        if(!existingEffects.TryAddStacksBySource(newEffect.Context.Caster, newEffect.Stacks))
                         {
                             existingEffects.AddEffect(newEffect);
                             addedNew = true;
                         }
                         break;
                     case StackingBehavior.StackNewest:
-                        if (existingEffects.TryGetNewestEffectFromSource(newEffect.Source, out var newestFromSource))
+                        if (existingEffects.TryGetNewestEffectFromSource(newEffect.Context.Caster, out var newestFromSource))
                             newestFromSource.AddStacks(newEffect.Stacks);
                         else
                         {
@@ -59,7 +59,7 @@ namespace AbilitySystem.Effects
                         }
                         break;
                     case StackingBehavior.StackOldest:
-                        if (existingEffects.TryGetOldestEffectFromSource(newEffect.Source, out var oldestFromSource))
+                        if (existingEffects.TryGetOldestEffectFromSource(newEffect.Context.Caster, out var oldestFromSource))
                             oldestFromSource.AddStacks(newEffect.Stacks);
                         else
                         {

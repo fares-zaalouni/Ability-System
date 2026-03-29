@@ -14,4 +14,4 @@ namespace AbilitySystem.Effects
     {
         AbilityEffectApplyResult ApplyTo(IAbilityTarget target);
     }
-}
+}   

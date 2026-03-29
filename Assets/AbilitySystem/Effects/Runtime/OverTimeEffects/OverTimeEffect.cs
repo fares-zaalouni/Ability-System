@@ -8,7 +8,7 @@ namespace AbilitySystem.Effects
     public abstract class OverTimeEffect : IAbilityEffect
     {
         public OverTimeEffectDefinition _definition { get; private set; }
-        public ICaster Source { get; private set; }
+        public AbilityContext Context { get; private set; }
         public bool ApplyOnce { get; private set; }
         public float TickInterval { get; private set; }
         public int TickCount { get; private set; }
@@ -37,7 +37,7 @@ namespace AbilitySystem.Effects
         protected virtual void OnEffectRefreshed() => EffectRefreshed?.Invoke();
         protected virtual void OnEffectTick() => EffectTick?.Invoke();
 
-        public OverTimeEffect(OverTimeEffectDefinition definition, float duration, float tickInterval, int stacks, int maxStacks, ICaster source, bool applyOnce = false)
+        public OverTimeEffect(OverTimeEffectDefinition definition, float duration, float tickInterval, int stacks, int maxStacks, AbilityContext context, bool applyOnce = false)
         {
             _definition = definition;
             RemainingDuration = duration;
@@ -48,8 +48,7 @@ namespace AbilitySystem.Effects
             Stacks = stacks;
             MaxStacks = maxStacks;
             StackingPolicy = definition.StackingPolicy.CreateRuntimeStackingStrategy();
-            Source = source;
-            
+            Context = context;
         }
         
         public void Tick(float deltaTime, IAbilityTarget target)
@@ -88,9 +87,12 @@ namespace AbilitySystem.Effects
 
             OnEffectApplied();
             RegisterToTarget(target);
+            ApplyModifiers(target);
+
             return AbilityEffectApplyResult.Applied;
         }
 
+        public abstract void ApplyModifiers(IAbilityTarget target);
         public void RegisterToTarget(IAbilityTarget target)
         {
             OverTimeEffectLifetimeManager.Instance.RegisterOverTimeEffect(target, this);

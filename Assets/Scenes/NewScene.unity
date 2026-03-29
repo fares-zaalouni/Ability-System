@@ -276,6 +276,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Player
   _healthAttributeDefinition: {fileID: 11400000, guid: 9c25155f72bc43a4c9ec14ace200e500, type: 2}
   _manaAttributeDefinition: {fileID: 11400000, guid: 647c17ec548b11c409082c9c076dd5b7, type: 2}
+  _abilityPowerAttributeDefinition: {fileID: 11400000, guid: 2f5971acaf8c72b4599b7e6c125921c0, type: 2}
   _abilityDefinitions:
   - {fileID: 11400000, guid: fe7c6ae59f7b1c84c84b1bfe3e2033db, type: 2}
 --- !u!1 &641961407
@@ -780,7 +781,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1978637544
 MonoBehaviour:
   m_ObjectHideFlags: 0

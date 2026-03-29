@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f442472cf347664392ae85b094a911c, type: 3}
+  m_Name: Fireball_BurnDamageModifier_EnemyHealth
+  m_EditorClassIdentifier: AbilitySystem.Runtime::AbilitySystem.Attributes.AttributeModifierDefinition
+  _priority: 1
+  _applicationStrategy: 1
+  _source: 1
+  _attributeName: health
+  _percent: 1

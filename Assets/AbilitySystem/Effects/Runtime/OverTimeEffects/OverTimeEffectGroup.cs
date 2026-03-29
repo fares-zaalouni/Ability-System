@@ -41,7 +41,7 @@ namespace AbilitySystem.Effects
             var effectsSnapshot = new List<OverTimeEffect>(Effects);
             foreach (var e in effectsSnapshot)
             {
-                if (e.Source == source)
+                if (e.Context.Caster == source)
                 {
                     effect = e;
                     return true;
@@ -62,7 +62,7 @@ namespace AbilitySystem.Effects
             var effectsSnapshot = new List<OverTimeEffect>(Effects);
             for (int i = effectsSnapshot.Count - 1; i >= 0; i--)
             {
-                if (effectsSnapshot[i].Source == source)
+                if (effectsSnapshot[i].Context.Caster == source)
                 {
                     effect = effectsSnapshot[i];
                     return true;
@@ -94,7 +94,7 @@ namespace AbilitySystem.Effects
             OverTimeEffect least = null;
             foreach (var e in effectsSnapshot)
             {
-                if (e.Source == source)
+                if (e.Context.Caster == source)
                 {
                     if (least == null || e.RemainingDuration < least.RemainingDuration)
                         least = e;
@@ -126,7 +126,7 @@ namespace AbilitySystem.Effects
             OverTimeEffect most = null;
             foreach (var e in effectsSnapshot)
             {
-                if (e.Source == source)
+                if (e.Context.Caster == source)
                 {
                     if (most == null || e.RemainingDuration > most.RemainingDuration)
                         most = e;
@@ -158,7 +158,7 @@ namespace AbilitySystem.Effects
             OverTimeEffect least = null;
             foreach (var e in effectsSnapshot)
             {
-                if (e.Source == source)
+                if (e.Context.Caster == source)
                 {
                     if (least == null || e.Stacks < least.Stacks)
                         least = e;
@@ -190,7 +190,7 @@ namespace AbilitySystem.Effects
             OverTimeEffect most = null;
             foreach (var e in effectsSnapshot)
             {
-                if (e.Source == source)
+                if (e.Context.Caster == source)
                 {
                     if (most == null || e.Stacks > most.Stacks)
                         most = e;
@@ -218,7 +218,7 @@ namespace AbilitySystem.Effects
             if (source == null) return;
             foreach (var e in Effects)
             {
-                if (e.Source == source)
+                if (e.Context.Caster == source)
                     e.RefreshDuration();
             }
         }
@@ -243,7 +243,7 @@ namespace AbilitySystem.Effects
             bool added = false;
             foreach (var e in Effects)
             {
-                if (e.Source == source)
+                if (e.Context.Caster == source)
                 {
                     e.AddStacks(amount);
                     added = true;
@@ -270,7 +270,7 @@ namespace AbilitySystem.Effects
             if (source == null) return;
             foreach (var e in Effects)
             {
-                if (e.Source == source)
+                if (e.Context.Caster == source)
                     e.RemoveStacks(amount);
             }
         }
@@ -294,7 +294,7 @@ namespace AbilitySystem.Effects
             if (source == null) return;
             foreach (var e in Effects)
             {
-                if (e.Source == source)
+                if (e.Context.Caster == source)
                     e.ExtendDuration(amount);
             }
         }
@@ -309,5 +309,12 @@ namespace AbilitySystem.Effects
             }
         }
         
+        public void ReApplyModifiers(IAbilityTarget target)
+        {
+            foreach (var effect in Effects)
+            {
+                effect.ApplyModifiers(target);
+            }
+        }
     }
 }

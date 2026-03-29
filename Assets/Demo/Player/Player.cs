@@ -7,14 +7,17 @@ using System;
 using AbilitySystem.Attributes;
 
 using Attribute = AbilitySystem.Attributes.Attribute;
-public class Player : MonoBehaviour, 
+using AbilitySystem.Effects;
+public class Player : MonoBehaviour,
 ICaster,
-IAttributeBearer, 
+IAttributeHolder,
 IAbilityTarget
 {
     [SerializeField] private ConsumableAttributeDefinition _healthAttributeDefinition;
     [SerializeField] private ConsumableAttributeDefinition _manaAttributeDefinition;
-    private Dictionary<string, ConsumableAttribute> _attributes = new Dictionary<string, ConsumableAttribute>();
+    [SerializeField] private AttributeDefinition _abilityPowerAttributeDefinition;
+    private Dictionary<string, ConsumableAttribute> _consumableAttributes = new Dictionary<string, ConsumableAttribute>();
+    private Dictionary<string, Attribute> _attributes = new Dictionary<string, Attribute>();
     [SerializeField] private List<AbilityDefinition> _abilityDefinitions = new List<AbilityDefinition>();
 
     private Dictionary<string, AbilityInstance> _abilities = new Dictionary<string, AbilityInstance>();
@@ -24,20 +27,23 @@ IAbilityTarget
 
     void Awake()
     {
-        RegisterAttribute();
+        RegisterAttributes();
         foreach (var abilityDef in _abilityDefinitions)
         {
             GrantAbility(abilityDef);
         }
     }
-    public void RegisterAttribute()
+    public void RegisterAttributes()
     {
-        var healthResource = _healthAttributeDefinition.CreateRuntimeConsumableAttribute();
-        var manaResource = _manaAttributeDefinition.CreateRuntimeConsumableAttribute();
-        _attributes.Add(_healthAttributeDefinition.AttributeType, healthResource);
-        _attributes.Add(_manaAttributeDefinition.AttributeType, manaResource);
-        Debug.Log($"Initialized resource: {healthResource.Name} with MaxAmount: {healthResource.RuntimeValue} and CurrentAmount: {healthResource.CurrentAmount}");
-        Debug.Log($"Initialized resource: {manaResource.Name} with MaxAmount: {manaResource.RuntimeValue} and CurrentAmount: {manaResource.CurrentAmount}");
+        var health = _healthAttributeDefinition.CreateRuntimeConsumableAttribute();
+        var mana = _manaAttributeDefinition.CreateRuntimeConsumableAttribute();
+        var abilityPower = _abilityPowerAttributeDefinition.CreateRuntimeAttribute();
+        _consumableAttributes.Add(health.Name, health);
+        _consumableAttributes.Add(mana.Name, mana);
+        _attributes.Add(abilityPower.Name, abilityPower);
+        Debug.Log($"Initialized resource: {health.Name} with MaxAmount: {health.RuntimeValue} and CurrentAmount: {health.CurrentAmount}");
+        Debug.Log($"Initialized resource: {mana.Name} with MaxAmount: {mana.RuntimeValue} and CurrentAmount: {mana.CurrentAmount}");
+        Debug.Log($"Initialized attribute: {abilityPower.Name} with Value: {abilityPower.RuntimeValue}");
     }
 
     void Update()
@@ -52,7 +58,7 @@ IAbilityTarget
                     new ProjectileSpawnPoint(transform.position + transform.forward * 1.5f)
                 };
                 abilityInstance.Cast(out _currentCast, initialDependencies);
-                if(_currentCast.TryGetTarget(out var cast))
+                if (_currentCast.TryGetTarget(out var cast))
                 {
                     cast.OnCompleted += (ctx) => Debug.Log("Fireball cast completed!");
                     cast.OnCancelled += (ctx) => Debug.Log("Fireball cast cancelled!");
@@ -64,47 +70,47 @@ IAbilityTarget
         {
 
             Debug.Log("Attempting to Interrupt Fireball");
-            
-            if(_currentCast.TryGetTarget(out var cast) && _currentCast != null)
+
+            if (_currentCast.TryGetTarget(out var cast) && _currentCast != null)
             {
                 cast?.Interrupt();
             }
-            
+
         }
     }
 
-    public bool CanConsumeCost(AbilityCost cost)
+    public bool CanConsumeCost(Attribute cost)
     {
-        if (_attributes.TryGetValue(cost.costId, out var consumableAttribute))
+        if (_consumableAttributes.TryGetValue(cost.Name, out var consumableAttribute))
         {
-            return consumableAttribute.CanConsume(cost.Cost);
+            return consumableAttribute.CanConsume(cost.RuntimeValue);
         }
-        Debug.Log("Resource not found: " + cost.costId);
+        Debug.Log("Resource not found: " + cost.Name);
         return false;
     }
 
-    public bool CanConsumeCost(IReadOnlyCollection<AbilityCost> costs)
+    public bool CanConsumeCost(IReadOnlyCollection<Attribute> costs)
     {
         return costs.All(cost => CanConsumeCost(cost));
     }
 
-    public void ConsumeCost(AbilityCost cost)
+    public void ConsumeCost(Attribute cost)
     {
         if (CanConsumeCost(cost))
         {
-            if (_attributes.TryGetValue(cost.costId, out var consumableAttribute))
+            if (_consumableAttributes.TryGetValue(cost.Name, out var consumableAttribute))
             {
-                Debug.Log($"Consuming {cost.Cost} of {consumableAttribute.Name}");
-                consumableAttribute.Consume(cost.Cost);
+                Debug.Log($"Consuming {cost.RuntimeValue} of {consumableAttribute.Name}");
+                consumableAttribute.Consume(cost.RuntimeValue);
             }
         }
     }
 
-    public void ConsumeCost(IReadOnlyCollection<AbilityCost> costs)
+    public void ConsumeCost(IReadOnlyCollection<Attribute> costs)
     {
         Debug.Log($"Attempting to consume costs for ability:");
         Debug.Log($"Resource before:");
-        foreach (var resource in _attributes.Values)
+        foreach (var resource in _consumableAttributes.Values)
         {
             Debug.Log($"- {resource.Name}: {(resource is IConsumableAttribute consumable ? consumable.CurrentAmount : resource.RuntimeValue)}");
         }
@@ -116,7 +122,7 @@ IAbilityTarget
             }
         }
         Debug.Log($"Finished consuming costs. Current Resources:");
-        foreach (var resource in _attributes.Values)
+        foreach (var resource in _consumableAttributes.Values)
         {
             Debug.Log($"- {resource.Name}: {(resource is IConsumableAttribute consumable ? consumable.CurrentAmount : resource.RuntimeValue)}");
         }
@@ -127,12 +133,15 @@ IAbilityTarget
         return true;
     }
 
-    public bool TryGetAttribute(string resourceName, out Attribute attribute)
+    public bool TryGetAttribute(string attributeName, out Attribute attribute)
     {
-        Debug.Log($"Trying to get resource: {resourceName}");
-        var found = _attributes.TryGetValue(resourceName, out var attr);
-        attribute = attr;
-        return found;
+        Debug.Log($"Trying to get attribute: {attributeName}");
+        if (_consumableAttributes.TryGetValue(attributeName, out var consumableAttribute))
+        {
+            attribute = consumableAttribute;
+            return true;
+        }
+        return _attributes.TryGetValue(attributeName, out attribute);
     }
 
     public void GrantAbility(AbilityDefinition abilityDefinition)
@@ -148,10 +157,10 @@ IAbilityTarget
         callbacks[1] = (ctx) => Debug.Log($"{abilityDefinition.AbilityName} cast cancelled!");
         callbacks[2] = (ctx) => Debug.Log($"{abilityDefinition.AbilityName} cast interrupted!");
         _castCompleteCallbacks[abilityDefinition] = callbacks;
-         _abilities.Add(abilityDefinition.AbilityName, abilityInstance);
-            SignalBus.Subscribe(abilityDefinition.CastCompleteSignal, callbacks[0]);
-            SignalBus.Subscribe(abilityDefinition.CastCancelSignal, callbacks[1]);
-            SignalBus.Subscribe(abilityDefinition.CastInterruptSignal, callbacks[2]);
+        _abilities.Add(abilityDefinition.AbilityName, abilityInstance);
+        SignalBus.Subscribe(abilityDefinition.CastCompleteSignal, callbacks[0]);
+        SignalBus.Subscribe(abilityDefinition.CastCancelSignal, callbacks[1]);
+        SignalBus.Subscribe(abilityDefinition.CastInterruptSignal, callbacks[2]);
         CooldownManager.Instance.RegisterCooldown(this, abilityInstance.Id, abilityInstance.Cooldown);
         Debug.Log($"Granted ability: {abilityDefinition.AbilityName}");
     }
@@ -172,6 +181,10 @@ IAbilityTarget
             Debug.LogWarning($"Ability {abilityDefinition.AbilityName} not found.");
         }
     }
+
+   
+
+
     private void UnSubscribeAbility(AbilityDefinition abilityDefinition)
     {
         if (_castCompleteCallbacks.TryGetValue(abilityDefinition, out var callbacks))

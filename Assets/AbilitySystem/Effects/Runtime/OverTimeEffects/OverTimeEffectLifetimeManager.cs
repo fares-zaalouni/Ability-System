@@ -37,6 +37,24 @@ namespace AbilitySystem.Effects
             DontDestroyOnLoad(gameObject);
         }
 
+        public void ReApplyOverTimeEffectsModifier(IAbilityTarget target, int effectTypeId = -1)
+        {
+            if (_activeOverTimeEffects.TryGetValue(target, out var effectsById))
+            {
+                if (effectTypeId == -1)
+                {
+                    foreach (var group in effectsById.Values)
+                    {
+                        group.ReApplyModifiers(target);
+                    }
+                }
+                else if (effectsById.TryGetValue(effectTypeId, out var group))
+                {
+                    group.ReApplyModifiers(target);
+                }
+            }
+        }
+
         public void RegisterOverTimeEffect(IAbilityTarget target, OverTimeEffect effect)
         {
             if (!_activeOverTimeEffects.ContainsKey(target))

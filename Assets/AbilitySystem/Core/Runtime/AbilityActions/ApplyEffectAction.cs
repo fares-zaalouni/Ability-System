@@ -1,6 +1,7 @@
 using UnityEngine;
 using AbilitySystem.Effects;
 using AbilitySystem.Targeting;
+using AbilitySystem.Utility;
 
 namespace AbilitySystem.Core
 {
@@ -22,7 +23,8 @@ namespace AbilitySystem.Core
 
             foreach (IAbilityTarget target in context.Targets)
             {
-                var applyResult = _abilityEffectDefinition.CreateEffect(context.Caster).ApplyTo(target);
+                AbilityDebug.Log($"Applying effect '{_abilityEffectDefinition.name}' to target: {target}");
+                var applyResult = _abilityEffectDefinition.CreateEffect(context).ApplyTo(target);
                 switch (applyResult)
                 {
                     case AbilityEffectApplyResult.Applied:

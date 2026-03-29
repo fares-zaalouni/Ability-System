@@ -10,8 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 33a9909bce983da4597bfcfc93c924df, type: 3}
-  m_Name: ManaResource
-  m_EditorClassIdentifier: Assembly-CSharp::AbilitySystem.Resources.ManaResourceDefinition
-  _attributeName: mana
-  _maxAmount: 100
-  _initialAmount: 100
+  m_Name: HealthAttribute
+  m_EditorClassIdentifier: Assembly-CSharp::AbilitySystem.Resources.BaseResourceDefinition
+  _attributeName: health
+  _baseValue: 1000
+  _id: 3f6c99ff-91d8-4e83-937c-6053600e8fd0
+  _initialAmount: 1000

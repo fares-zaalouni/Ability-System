@@ -2,10 +2,12 @@ using UnityEngine;
 
 namespace AbilitySystem.Attributes
 {
-    public abstract class AttributeDefinition : ScriptableObject
+    [CreateAssetMenu(fileName = "Attribute", menuName = "Ability System/Attributes/Attribute")]
+    public class AttributeDefinition : ScriptableObject
     {
         [SerializeField] protected string _attributeName;
-        [SerializeField] protected float _initialAmount;
+        public string AttributeName => _attributeName;
+        [SerializeField] protected float _baseValue;
         [SerializeField, HideInInspector] private string _id;
         public string AttributeType => _id;
 
@@ -16,7 +18,7 @@ namespace AbilitySystem.Attributes
         }
         public virtual Attribute CreateRuntimeAttribute()
         {
-            return new Attribute(_initialAmount, _attributeName != "" ? _attributeName : "-No Name-");
+            return new Attribute(_baseValue, _attributeName != "" ? _attributeName : "-No Name-");
         }
     }
 }

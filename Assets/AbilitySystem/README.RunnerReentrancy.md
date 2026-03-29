@@ -1,5 +1,7 @@
 # Runner Re-entrancy Decision Log
 
+Last Updated: 2026-03-29 (Attributes/Modifiers refactor review: Pattern remains valid. Effects now receive context at construction; runner reentrancy principles unchanged.)
+
 ## Why this exists
 This note documents the re-entrancy decision in the ability pipeline so future changes do not re-introduce event loops.
 

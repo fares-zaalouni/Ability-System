@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2bd5631a452e00841b62190298f34b60, type: 3}
-  m_Name: Fireball_ManaCost
+  m_Name: AbilityPower
   m_EditorClassIdentifier: AbilitySystem.Runtime::AbilitySystem.Attributes.AttributeDefinition
-  _attributeName: mana
-  _baseValue: 10
-  _id: c4bbd4d8-12a1-4a46-9e9d-6250a646593b
+  _attributeName: ability_power
+  _baseValue: 100
+  _id: 99e74d14-24d2-4b35-9855-75fa10d1d1d6

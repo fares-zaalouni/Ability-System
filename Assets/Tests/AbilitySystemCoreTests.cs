@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using AbilitySystem.Core;
+using AbilitySystem.Effects;
 using AbilitySystem.Targeting;
 using NUnit.Framework;
 using UnityEngine;
@@ -198,6 +199,10 @@ namespace AbilitySystem.Tests.EditMode
 
         private sealed class FakeTarget : IAbilityTarget
         {
+            public IEnumerable<IAbilityEffect> GetActiveEffects()
+            {
+                return new List<IAbilityEffect>();
+            }
             public bool IsTargetable()
             {
                 return true;

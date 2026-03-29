@@ -1,11 +1,16 @@
+using System;
+
 namespace AbilitySystem.Attributes
 {
     public class ConsumableAttribute : Attribute, IConsumableAttribute
     {
         private float _current;
+        public event Action OnCurrentAmountChanged;
+        public void OnCurrentAmountChangedInvoke() => OnCurrentAmountChanged?.Invoke();
         public ConsumableAttribute(
             string name,
-            float initialAmount): base(initialAmount,  name)
+            float baseValue,
+            float initialAmount): base(baseValue,  name)
         {
             _current = initialAmount;
         }
@@ -17,6 +22,8 @@ namespace AbilitySystem.Attributes
             if (CanConsume(amount))
             {
                 _current -= amount;
+                if(amount != 0)
+                    OnCurrentAmountChangedInvoke();
             }
         }
 
@@ -28,6 +35,8 @@ namespace AbilitySystem.Attributes
         public void Add(float amount)
         {
             _current += amount;
+            if(_current != _current + amount)
+                OnCurrentAmountChangedInvoke();
              if (_current > RuntimeValue)
             {
                 _current = RuntimeValue;

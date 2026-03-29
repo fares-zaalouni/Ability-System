@@ -1,2 +1,14 @@
 fileFormatVersion: 2
 guid: 5496e567249554645950674ead09c22f
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - _healthAttributeDefinition: {fileID: 11400000, guid: 9c25155f72bc43a4c9ec14ace200e500, type: 2}
+  - _manaAttributeDefinition: {fileID: 11400000, guid: 647c17ec548b11c409082c9c076dd5b7, type: 2}
+  - _AbilityPowerAttributeDefinition: {fileID: 11400000, guid: 2f5971acaf8c72b4599b7e6c125921c0, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
