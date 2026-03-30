@@ -25,7 +25,6 @@ namespace AbilitySystem.Targeting
             foreach (Collider collider in colliders)
             {
                 IAbilityTarget target = collider.GetComponent<IAbilityTarget>();
-                Debug.Log($"Checking collider {collider.name} for IAbilityTarget. Found: {target != null}");
                 if (target != null && target.IsTargetable())
                 {
                     targets.Add(target);

@@ -1,6 +1,7 @@
 using System;
 using AbilitySystem.Core;
 using AbilitySystem.Targeting;
+using AbilitySystem.Utility;
 using UnityEngine;
 
 namespace AbilitySystem.Projectiles
@@ -42,7 +43,7 @@ namespace AbilitySystem.Projectiles
         
         private void OnTriggerEnter(Collider other)
         {
-            Debug.Log($"Projectile hit: {other.name}");
+            AbilityDebug.Log($"Projectile hit: {other.name}");
             IAbilityTarget target = other.GetComponent<IAbilityTarget>();
             if (target != null && target.IsTargetable())
             {

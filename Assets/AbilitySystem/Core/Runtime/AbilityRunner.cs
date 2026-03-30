@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using AbilitySystem.Utility;
 using UnityEngine;
 
 namespace AbilitySystem.Core
@@ -23,7 +24,7 @@ namespace AbilitySystem.Core
             _currentActionIndex++;
             if (_currentActionIndex < _actions.Count)
             {
-                Debug.Log("Executing action: " + _actions[_currentActionIndex].GetType().Name);
+                AbilityDebug.Log("Executing action: " + _actions[_currentActionIndex].GetType().Name);
                 _actions[_currentActionIndex].Execute(_context, this);
             }
             else
@@ -44,7 +45,7 @@ namespace AbilitySystem.Core
         {
             if (_currentActionIndex < _actions.Count && _actions[_currentActionIndex] is SustainedAction interruptable)
             {
-                Debug.Log("Attempting to interrupt action: " + _actions[_currentActionIndex].GetType().Name);
+                AbilityDebug.Log("Attempting to interrupt action: " + _actions[_currentActionIndex].GetType().Name);
                 if (interruptable.Interrupt(_context))
                     TakeAftermathAction(interruptable.InterruptAftermath);
             }

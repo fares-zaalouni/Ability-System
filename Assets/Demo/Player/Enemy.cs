@@ -3,8 +3,8 @@ using AbilitySystem.Attributes;
 using AbilitySystem.Core;
 using AbilitySystem.Effects;
 using AbilitySystem.Targeting;
+using AbilitySystem.Utility;
 using UnityEngine;
-using System.Linq;
 
 using Attribute = AbilitySystem.Attributes.Attribute;
 public class Enemy : MonoBehaviour,
@@ -19,7 +19,6 @@ IDamageable
     void Awake()
     {
         RegisterAttributes();
-        
     }
     
     public bool IsTargetable()
@@ -33,7 +32,7 @@ IDamageable
         {
             
             consumableHealth.Consume(amount);
-            Debug.Log($"{name} took {amount} damage. Remaining Health: {consumableHealth.CurrentAmount}");
+            AbilityDebug.Log($"{name} took {amount} damage. Remaining Health: {consumableHealth.CurrentAmount}");
 
             if(consumableHealth.CurrentAmount <300 && consumableHealth.RuntimeValue != 2000)
             {
@@ -48,12 +47,12 @@ IDamageable
         }
         else
         {
-            Debug.LogError($"{name} could not resolve health attribute '{_healthAttributeDefinition.AttributeName}'.");
+            AbilityDebug.LogError($"{name} could not resolve health attribute '{_healthAttributeDefinition.AttributeName}'.");
         }
     }
     private void Die()
     {
-        Debug.Log($"{name} died!");
+        AbilityDebug.Log($"{name} died!");
         // Add death logic here (e.g., play animation, drop loot, etc.)
     }
 
@@ -95,6 +94,6 @@ IDamageable
     {
         var health = _healthAttributeDefinition.CreateRuntimeConsumableAttribute();
         _consumableAttributes.Add(health.Name, health);
-        Debug.Log($"Initialized resource: {health.Name} with MaxAmount: {health.RuntimeValue} and CurrentAmount: {health.CurrentAmount}");
+        AbilityDebug.Log($"Initialized resource: {health.Name} with MaxAmount: {health.RuntimeValue} and CurrentAmount: {health.CurrentAmount}");
     }
 }

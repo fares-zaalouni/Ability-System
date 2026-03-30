@@ -38,16 +38,19 @@ namespace AbilitySystem.Effects
         {
             effect = null;
             if (source == null) return false;
-            var effectsSnapshot = new List<OverTimeEffect>(Effects);
-            foreach (var e in effectsSnapshot)
+
+            // Reverse index scan is resilient if the list mutates during iteration.
+            // Keep assigning matches so the final result is the oldest (lowest index) match.
+            for (int i = Effects.Count - 1; i >= 0; i--)
             {
+                var e = Effects[i];
                 if (e.Context.Caster == source)
                 {
                     effect = e;
-                    return true;
                 }
             }
-            return false;
+
+            return effect != null;
         }
 
         public OverTimeEffect GetNewestEffect()
@@ -59,12 +62,11 @@ namespace AbilitySystem.Effects
         {
             effect = null;
             if (source == null) return false;
-            var effectsSnapshot = new List<OverTimeEffect>(Effects);
-            for (int i = effectsSnapshot.Count - 1; i >= 0; i--)
+            for (int i = Effects.Count - 1; i >= 0; i--)
             {
-                if (effectsSnapshot[i].Context.Caster == source)
+                if (Effects[i].Context.Caster == source)
                 {
-                    effect = effectsSnapshot[i];
+                    effect = Effects[i];
                     return true;
                 }
             }
@@ -90,13 +92,15 @@ namespace AbilitySystem.Effects
         {
             effect = null;
             if (source == null) return false;
-            var effectsSnapshot = new List<OverTimeEffect>(Effects);
             OverTimeEffect least = null;
-            foreach (var e in effectsSnapshot)
+
+            for (int i = Effects.Count - 1; i >= 0; i--)
             {
+                var e = Effects[i];
                 if (e.Context.Caster == source)
                 {
-                    if (least == null || e.RemainingDuration < least.RemainingDuration)
+                    // <= preserves previous tie behavior (oldest wins on ties).
+                    if (least == null || e.RemainingDuration <= least.RemainingDuration)
                         least = e;
                 }
             }
@@ -122,13 +126,15 @@ namespace AbilitySystem.Effects
         {
             effect = null;
             if (source == null) return false;
-            var effectsSnapshot = new List<OverTimeEffect>(Effects);
             OverTimeEffect most = null;
-            foreach (var e in effectsSnapshot)
+
+            for (int i = Effects.Count - 1; i >= 0; i--)
             {
+                var e = Effects[i];
                 if (e.Context.Caster == source)
                 {
-                    if (most == null || e.RemainingDuration > most.RemainingDuration)
+                    // >= preserves previous tie behavior (oldest wins on ties).
+                    if (most == null || e.RemainingDuration >= most.RemainingDuration)
                         most = e;
                 }
             }
@@ -154,13 +160,15 @@ namespace AbilitySystem.Effects
         {
             effect = null;
             if (source == null) return false;
-            var effectsSnapshot = new List<OverTimeEffect>(Effects);
             OverTimeEffect least = null;
-            foreach (var e in effectsSnapshot)
+
+            for (int i = Effects.Count - 1; i >= 0; i--)
             {
+                var e = Effects[i];
                 if (e.Context.Caster == source)
                 {
-                    if (least == null || e.Stacks < least.Stacks)
+                    // <= preserves previous tie behavior (oldest wins on ties).
+                    if (least == null || e.Stacks <= least.Stacks)
                         least = e;
                 }
             }
@@ -186,13 +194,15 @@ namespace AbilitySystem.Effects
         {
             effect = null;
             if (source == null) return false;
-            var effectsSnapshot = new List<OverTimeEffect>(Effects);
             OverTimeEffect most = null;
-            foreach (var e in effectsSnapshot)
+
+            for (int i = Effects.Count - 1; i >= 0; i--)
             {
+                var e = Effects[i];
                 if (e.Context.Caster == source)
                 {
-                    if (most == null || e.Stacks > most.Stacks)
+                    // >= preserves previous tie behavior (oldest wins on ties).
+                    if (most == null || e.Stacks >= most.Stacks)
                         most = e;
                 }
             }
@@ -302,10 +312,10 @@ namespace AbilitySystem.Effects
         
         public void TickAll(float deltaTime, IAbilityTarget target)
         {
-            var effectsCopy = new List<OverTimeEffect>(Effects);
-            foreach (var effect in effectsCopy)
+            // Iterate backwards to stay safe if an effect expires and unregisters during Tick.
+            for (int i = Effects.Count - 1; i >= 0; i--)
             {
-                effect.Tick(deltaTime, target); 
+                Effects[i].Tick(deltaTime, target);
             }
         }
         

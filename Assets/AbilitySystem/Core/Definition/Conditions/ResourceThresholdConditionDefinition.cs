@@ -1,4 +1,5 @@
 using AbilitySystem.Attributes;
+using AbilitySystem.Utility;
 using UnityEngine;
 
 namespace AbilitySystem.Core
@@ -20,7 +21,7 @@ namespace AbilitySystem.Core
             IAttributeHolder resourceBearer = context.Caster as IAttributeHolder;
             if (resourceBearer == null)
             {
-                Debug.LogError("AttributeThresholdConditionDefinition can only be evaluated on casters that implement IAttibuteBearer.");
+                AbilityDebug.LogError("AttributeThresholdConditionDefinition can only be evaluated on casters that implement IAttibuteBearer.");
                 return false;
             }
 

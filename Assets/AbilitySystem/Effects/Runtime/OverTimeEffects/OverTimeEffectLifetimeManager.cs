@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using AbilitySystem.Targeting;
+using AbilitySystem.Utility;
 using UnityEngine;
 
 namespace AbilitySystem.Effects
@@ -24,6 +25,9 @@ namespace AbilitySystem.Effects
 
         private readonly Dictionary<IAbilityTarget, Dictionary<int, OverTimeEffectGroup>> _activeOverTimeEffects = new();
         private readonly Dictionary<IAbilityTarget, Dictionary<Guid, Action>> _overTimeEffectHandlers = new();
+        private readonly List<int> _scratchEmptyEffectTypeIds = new();
+        private readonly List<IAbilityTarget> _scratchTargetsToPrune = new();
+        private readonly List<IAbilityTarget> _scratchHandlerTargetsToRemove = new();
         [SerializeField] private float _pruneIntervalSeconds = 0.5f;
         private float _timeSinceLastPrune;
 
@@ -77,7 +81,7 @@ namespace AbilitySystem.Effects
                 _overTimeEffectHandlers[target][effect.Id] = handler;      
             }
             if(_activeOverTimeEffects[target][effect.EffectTypeId].EffectCount == 0)
-                    Debug.LogWarning("Registering first OverTimeEffect of type " + effect.EffectTypeId +" but it was not added to the group. Check if the stacking policy is set up correctly. Effect: " + effect);
+                    AbilityDebug.LogWarning("Registering first OverTimeEffect of type " + effect.EffectTypeId +" but it was not added to the group. Check if the stacking policy is set up correctly. Effect: " + effect);
         }
 
         public void UnregisterOverTimeEffect(IAbilityTarget target, OverTimeEffect effect)
@@ -151,16 +155,16 @@ namespace AbilitySystem.Effects
         {
             if (_activeOverTimeEffects.TryGetValue(target, out var effectsById))
             {
-                var emptyEffectTypeIds = new List<int>();
+                _scratchEmptyEffectTypeIds.Clear();
                 foreach (var kvp in effectsById)
                 {
                     if (kvp.Value == null || kvp.Value.EffectCount == 0)
                     {
-                        emptyEffectTypeIds.Add(kvp.Key);
+                        _scratchEmptyEffectTypeIds.Add(kvp.Key);
                     }
                 }
 
-                foreach (var effectTypeId in emptyEffectTypeIds)
+                foreach (var effectTypeId in _scratchEmptyEffectTypeIds)
                 {
                     effectsById.Remove(effectTypeId);
                 }
@@ -179,22 +183,27 @@ namespace AbilitySystem.Effects
 
         private void PruneEmptyEntries()
         {
-            var targetsToPrune = new List<IAbilityTarget>(_activeOverTimeEffects.Keys);
-            foreach (var target in targetsToPrune)
+            _scratchTargetsToPrune.Clear();
+            foreach (var target in _activeOverTimeEffects.Keys)
+            {
+                _scratchTargetsToPrune.Add(target);
+            }
+
+            foreach (var target in _scratchTargetsToPrune)
             {
                 PruneTargetEntries(target);
             }
 
-            var handlerTargetsToRemove = new List<IAbilityTarget>();
+            _scratchHandlerTargetsToRemove.Clear();
             foreach (var kvp in _overTimeEffectHandlers)
             {
                 if (kvp.Value == null || kvp.Value.Count == 0)
                 {
-                    handlerTargetsToRemove.Add(kvp.Key);
+                    _scratchHandlerTargetsToRemove.Add(kvp.Key);
                 }
             }
 
-            foreach (var target in handlerTargetsToRemove)
+            foreach (var target in _scratchHandlerTargetsToRemove)
             {
                 _overTimeEffectHandlers.Remove(target);
             }

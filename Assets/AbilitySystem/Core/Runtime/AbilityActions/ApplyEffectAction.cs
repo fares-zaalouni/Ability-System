@@ -41,9 +41,9 @@ namespace AbilitySystem.Core
 
             context.Set(new EffectApplySummary(totalTargets, appliedCount, skippedCount, failedCount));
 
-            if (Debug.isDebugBuild && totalTargets > 0 && appliedCount == 0)
+            if (totalTargets > 0 && appliedCount == 0)
             {
-                Debug.LogWarning(
+                AbilityDebug.LogWarning(
                     $"ApplyEffectAction: Effect '{_abilityEffectDefinition.name}' applied to 0/{totalTargets} targets. " +
                     $"Skipped={skippedCount}, Failed={failedCount}.");
             }

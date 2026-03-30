@@ -6,6 +6,8 @@ namespace AbilitySystem.Attributes
 {
     public class Attribute
     {
+        private static readonly Comparison<IModifier> ModifierPriorityComparer = (a, b) => a.Priority.CompareTo(b.Priority);
+
         public string Name { get; protected set; }
 
         protected float _base;
@@ -58,14 +60,14 @@ namespace AbilitySystem.Attributes
         public void AddModifier(IModifier modifier)
         {
             _modifiers.Add(modifier);
-            _modifiers = _modifiers.OrderBy(m => m.Priority).ToList();
+            _modifiers.Sort(ModifierPriorityComparer);
             RecalculateRuntimeValues();
         }
 
         public void AddModifiers(IEnumerable<IModifier> modifiers)
         {
             _modifiers.AddRange(modifiers);
-            _modifiers = _modifiers.OrderBy(m => m.Priority).ToList();
+            _modifiers.Sort(ModifierPriorityComparer);
             RecalculateRuntimeValues();
         }
         
@@ -73,7 +75,6 @@ namespace AbilitySystem.Attributes
         {
             if (_modifiers.Remove(modifier))
             {
-                _modifiers = _modifiers.OrderBy(m => m.Priority).ToList();
                 RecalculateRuntimeValues();
             }
         }
@@ -90,7 +91,6 @@ namespace AbilitySystem.Attributes
             }
             if (removedAny)
             {
-                _modifiers = _modifiers.OrderBy(m => m.Priority).ToList();
                 RecalculateRuntimeValues();
             }
         }

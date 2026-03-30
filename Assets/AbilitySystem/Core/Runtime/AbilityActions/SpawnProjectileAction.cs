@@ -1,5 +1,6 @@
 using UnityEngine;
 using AbilitySystem.Projectiles;
+using AbilitySystem.Utility;
 
 namespace AbilitySystem.Core
 {
@@ -21,7 +22,7 @@ namespace AbilitySystem.Core
         {
             if (!context.TryGet<ProjectileSpawnPoint>(out var projectileSpawnPoint))
             {
-                Debug.LogError("Failed to spawn projectile: No spawn point found.");
+                AbilityDebug.LogError("Failed to spawn projectile: No spawn point found.");
                 runner.Next();
                 return;
             }

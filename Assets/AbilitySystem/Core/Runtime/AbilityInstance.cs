@@ -69,7 +69,7 @@ namespace AbilitySystem.Core
             
             if (!IsOnCooldown && canPayCosts)
             {
-                Debug.Log($"Casting {_definition.AbilityName}");
+                AbilityDebug.Log($"Casting {_definition.AbilityName}");
                 _resourceBearer.ConsumeCost(_costs);
                 CooldownManager.Instance.StartCooldown(_caster, Id);
                 Action<AbilityContext> callback = null;

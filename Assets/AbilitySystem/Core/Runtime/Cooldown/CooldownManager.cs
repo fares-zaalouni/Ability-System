@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using AbilitySystem.Utility;
 using UnityEngine;
 
 namespace AbilitySystem.Core
@@ -36,17 +37,17 @@ namespace AbilitySystem.Core
         }
         public void StartCooldown(ICaster caster, Guid abilityCooldownId)
         {
-            Debug.Log("CooldownManager: Starting cooldown for caster " + caster + " with cooldown ID " + abilityCooldownId);
+            AbilityDebug.Log("CooldownManager: Starting cooldown for caster " + caster + " with cooldown ID " + abilityCooldownId);
             if(!_allCooldowns.ContainsKey(caster))
             {
-                Debug.LogError($"CooldownManager: Caster {caster} not registered. Cannot start cooldown.");
+                AbilityDebug.LogError($"CooldownManager: Caster {caster} not registered. Cannot start cooldown.");
                 return;
             }
             var casterCooldowns = _allCooldowns[caster];
 
             if (!casterCooldowns.ContainsKey(abilityCooldownId))
             {
-                Debug.LogError($"CooldownManager: Cooldown {abilityCooldownId} not found for caster {caster}.");
+                AbilityDebug.LogError($"CooldownManager: Cooldown {abilityCooldownId} not found for caster {caster}.");
                 return;
             }
             var cooldown = casterCooldowns[abilityCooldownId];
@@ -57,7 +58,7 @@ namespace AbilitySystem.Core
         {
             if(!_allCooldowns.TryGetValue(caster, out var casterCooldowns))
             {
-                Debug.LogError($"CooldownManager: Caster {caster} not registered. Cannot start global cooldown.");
+                AbilityDebug.LogError($"CooldownManager: Caster {caster} not registered. Cannot start global cooldown.");
                 return;
             }
             foreach (var cooldown in casterCooldowns.Values)

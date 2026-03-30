@@ -28,7 +28,6 @@ namespace AbilitySystem.Effects
 
                 if (attributeModifier.Source == ModifierSource.Caster)
                 {
-                    AbilityDebug.Log($"Processing {effectLogPrefix} modifier from Caster. Attribute: {attributeModifier.AttributeName}, Percent: {attributeModifier.Percent:F4}");
                     if (sourceAttributeHolder == null)
                     {
                         AbilityDebug.LogError($"{effectLogPrefix} Modifier Error: Caster is not an attribute holder. Source: {context.Caster}");

@@ -30,7 +30,7 @@ namespace AbilitySystem.Editor.Validation
                 if (!AttributeNameValidator.IsValid(referencedName))
                 {
                     errorCount++;
-                    Debug.LogError($"[Attribute Validation] Modifier '{AssetDatabase.GetAssetPath(modifier)}' has empty attribute name.", modifier);
+                    AbilityDebug.LogError($"[Attribute Validation] Modifier '{AssetDatabase.GetAssetPath(modifier)}' has empty attribute name.", modifier);
                     continue;
                 }
 
@@ -40,7 +40,7 @@ namespace AbilitySystem.Editor.Validation
                     var suggestions = AttributeNameValidator.SimilarAttributeNames(referencedName, knownNames);
                     var suggestionSuffix = string.IsNullOrEmpty(suggestions) ? string.Empty : $" Did you mean: {suggestions}?";
 
-                    Debug.LogError(
+                    AbilityDebug.LogError(
                         $"[Attribute Validation] Modifier '{modifier.name}' references unknown attribute '{referencedName}'.{suggestionSuffix}",
                         modifier);
                 }
@@ -48,11 +48,11 @@ namespace AbilitySystem.Editor.Validation
 
             if (errorCount == 0)
             {
-                Debug.Log($"[Attribute Validation] Success. Checked {attributeDefinitions.Count} attribute definitions and {modifierDefinitions.Count} modifier definitions. No issues found.");
+                AbilityDebug.Log($"[Attribute Validation] Success. Checked {attributeDefinitions.Count} attribute definitions and {modifierDefinitions.Count} modifier definitions. No issues found.");
             }
             else
             {
-                Debug.LogWarning($"[Attribute Validation] Completed with {errorCount} issue(s). See console errors for details.");
+                AbilityDebug.LogWarning($"[Attribute Validation] Completed with {errorCount} issue(s). See console errors for details.");
             }
         }
 

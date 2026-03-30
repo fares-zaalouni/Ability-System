@@ -5,6 +5,7 @@ using AbilitySystem.Targeting;
 using UnityEngine;
 using System;
 using AbilitySystem.Attributes;
+using AbilitySystem.Utility;
 
 using Attribute = AbilitySystem.Attributes.Attribute;
 using AbilitySystem.Effects;
@@ -41,9 +42,9 @@ IAbilityTarget
         _consumableAttributes.Add(health.Name, health);
         _consumableAttributes.Add(mana.Name, mana);
         _attributes.Add(abilityPower.Name, abilityPower);
-        Debug.Log($"Initialized resource: {health.Name} with MaxAmount: {health.RuntimeValue} and CurrentAmount: {health.CurrentAmount}");
-        Debug.Log($"Initialized resource: {mana.Name} with MaxAmount: {mana.RuntimeValue} and CurrentAmount: {mana.CurrentAmount}");
-        Debug.Log($"Initialized attribute: {abilityPower.Name} with Value: {abilityPower.RuntimeValue}");
+        AbilityDebug.Log($"Initialized resource: {health.Name} with MaxAmount: {health.RuntimeValue} and CurrentAmount: {health.CurrentAmount}");
+        AbilityDebug.Log($"Initialized resource: {mana.Name} with MaxAmount: {mana.RuntimeValue} and CurrentAmount: {mana.CurrentAmount}");
+        AbilityDebug.Log($"Initialized attribute: {abilityPower.Name} with Value: {abilityPower.RuntimeValue}");
     }
 
     void Update()
@@ -60,16 +61,16 @@ IAbilityTarget
                 abilityInstance.Cast(out _currentCast, initialDependencies);
                 if (_currentCast.TryGetTarget(out var cast))
                 {
-                    cast.OnCompleted += (ctx) => Debug.Log("Fireball cast completed!");
-                    cast.OnCancelled += (ctx) => Debug.Log("Fireball cast cancelled!");
-                    cast.OnInterrupted += (ctx) => Debug.Log("Fireball cast interrupted!");
+                    cast.OnCompleted += (ctx) => AbilityDebug.Log("Fireball cast completed!");
+                    cast.OnCancelled += (ctx) => AbilityDebug.Log("Fireball cast cancelled!");
+                    cast.OnInterrupted += (ctx) => AbilityDebug.Log("Fireball cast interrupted!");
                 }
             }
         }
         if (Input.GetKeyDown(KeyCode.F))
         {
 
-            Debug.Log("Attempting to Interrupt Fireball");
+            AbilityDebug.Log("Attempting to Interrupt Fireball");
 
             if (_currentCast.TryGetTarget(out var cast) && _currentCast != null)
             {
@@ -85,7 +86,7 @@ IAbilityTarget
         {
             return consumableAttribute.CanConsume(cost.RuntimeValue);
         }
-        Debug.Log("Resource not found: " + cost.Name);
+        AbilityDebug.Log("Resource not found: " + cost.Name);
         return false;
     }
 
@@ -100,7 +101,7 @@ IAbilityTarget
         {
             if (_consumableAttributes.TryGetValue(cost.Name, out var consumableAttribute))
             {
-                Debug.Log($"Consuming {cost.RuntimeValue} of {consumableAttribute.Name}");
+                AbilityDebug.Log($"Consuming {cost.RuntimeValue} of {consumableAttribute.Name}");
                 consumableAttribute.Consume(cost.RuntimeValue);
             }
         }
@@ -108,11 +109,11 @@ IAbilityTarget
 
     public void ConsumeCost(IReadOnlyCollection<Attribute> costs)
     {
-        Debug.Log($"Attempting to consume costs for ability:");
-        Debug.Log($"Resource before:");
+        AbilityDebug.Log($"Attempting to consume costs for ability:");
+        AbilityDebug.Log($"Resource before:");
         foreach (var resource in _consumableAttributes.Values)
         {
-            Debug.Log($"- {resource.Name}: {(resource is IConsumableAttribute consumable ? consumable.CurrentAmount : resource.RuntimeValue)}");
+            AbilityDebug.Log($"- {resource.Name}: {(resource is IConsumableAttribute consumable ? consumable.CurrentAmount : resource.RuntimeValue)}");
         }
         if (CanConsumeCost(costs))
         {
@@ -121,10 +122,10 @@ IAbilityTarget
                 ConsumeCost(cost);
             }
         }
-        Debug.Log($"Finished consuming costs. Current Resources:");
+        AbilityDebug.Log($"Finished consuming costs. Current Resources:");
         foreach (var resource in _consumableAttributes.Values)
         {
-            Debug.Log($"- {resource.Name}: {(resource is IConsumableAttribute consumable ? consumable.CurrentAmount : resource.RuntimeValue)}");
+            AbilityDebug.Log($"- {resource.Name}: {(resource is IConsumableAttribute consumable ? consumable.CurrentAmount : resource.RuntimeValue)}");
         }
     }
 
@@ -135,7 +136,7 @@ IAbilityTarget
 
     public bool TryGetAttribute(string attributeName, out Attribute attribute)
     {
-        Debug.Log($"Trying to get attribute: {attributeName}");
+        AbilityDebug.Log($"Trying to get attribute: {attributeName}");
         if (_consumableAttributes.TryGetValue(attributeName, out var consumableAttribute))
         {
             attribute = consumableAttribute;
@@ -148,21 +149,21 @@ IAbilityTarget
     {
         if (_abilities.ContainsKey(abilityDefinition.AbilityName))
         {
-            Debug.LogWarning($"Ability {abilityDefinition.AbilityName} already granted to player.");
+            AbilityDebug.LogWarning($"Ability {abilityDefinition.AbilityName} already granted to player.");
             return;
         }
         var abilityInstance = new AbilityInstance(abilityDefinition, this, this);
         var callbacks = new Action<AbilityContext>[3];
-        callbacks[0] = (ctx) => Debug.Log($"{abilityDefinition.AbilityName} cast completed!");
-        callbacks[1] = (ctx) => Debug.Log($"{abilityDefinition.AbilityName} cast cancelled!");
-        callbacks[2] = (ctx) => Debug.Log($"{abilityDefinition.AbilityName} cast interrupted!");
+        callbacks[0] = (ctx) => AbilityDebug.Log($"{abilityDefinition.AbilityName} cast completed!");
+        callbacks[1] = (ctx) => AbilityDebug.Log($"{abilityDefinition.AbilityName} cast cancelled!");
+        callbacks[2] = (ctx) => AbilityDebug.Log($"{abilityDefinition.AbilityName} cast interrupted!");
         _castCompleteCallbacks[abilityDefinition] = callbacks;
         _abilities.Add(abilityDefinition.AbilityName, abilityInstance);
         SignalBus.Subscribe(abilityDefinition.CastCompleteSignal, callbacks[0]);
         SignalBus.Subscribe(abilityDefinition.CastCancelSignal, callbacks[1]);
         SignalBus.Subscribe(abilityDefinition.CastInterruptSignal, callbacks[2]);
         CooldownManager.Instance.RegisterCooldown(this, abilityInstance.Id, abilityInstance.Cooldown);
-        Debug.Log($"Granted ability: {abilityDefinition.AbilityName}");
+        AbilityDebug.Log($"Granted ability: {abilityDefinition.AbilityName}");
     }
 
     public void RemoveAbility(AbilityDefinition abilityDefinition)
@@ -174,11 +175,11 @@ IAbilityTarget
             _abilities.Remove(abilityDefinition.AbilityName);
             UnSubscribeAbility(abilityDefinition);
             CooldownManager.Instance.UnregisterCooldown(this, ability.Id);
-            Debug.Log($"Removed ability: {abilityDefinition.AbilityName}");
+            AbilityDebug.Log($"Removed ability: {abilityDefinition.AbilityName}");
         }
         else
         {
-            Debug.LogWarning($"Ability {abilityDefinition.AbilityName} not found.");
+            AbilityDebug.LogWarning($"Ability {abilityDefinition.AbilityName} not found.");
         }
     }
 
