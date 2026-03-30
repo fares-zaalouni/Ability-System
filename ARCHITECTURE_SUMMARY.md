@@ -1,9 +1,9 @@
-# Ability System Architecture Summary (2026-03-29)
+# Ability System Architecture Summary (2026-03-30)
 
 ## Session Overview
-Major refactor: Resources → Attributes/Modifiers system. Effects now context-aware. Full modifier support for instant + over-time effects. Snapshot + dynamic damage hybrid model validated.
+Major refactor: Resources → Attributes/Modifiers system. Effects now context-aware. Full modifier support for instant + over-time effects. Snapshot + dynamic damage hybrid model validated. Modifier helper extracted, core tests added, over-time manager cleanup hardened with periodic prune.
 
-**Architecture Grade: 8.5/10** (up from 7/10)
+**Architecture Grade: 8.7/10** (up from 8.5/10)
 
 ## Core System Flow
 
@@ -137,6 +137,7 @@ public void TakeDamage(float amount, ICaster source = null) {
 - Each effect instantiation has its own modifier list (no global state).
 - Caster/Target binding happens per-application, not shared.
 - Prevents 100-zombie stacking (100 enemies all receiving fireball → each gets unique modifier binding).
+- Shared `ModifierResolutionHelper` now centralizes Caster/Target binding logic for DamageEffect and DOTEffect.
 
 ### 3. Snapshot vs Dynamic Hybrid
 - **Offensive (Snapshot)**: Damage locked in at effect creation. If caster power changes after cast, damage stays same.
@@ -153,11 +154,18 @@ public void TakeDamage(float amount, ICaster source = null) {
 - UI can subscribe to stat changes without hardcoding visibility logic.
 - Not yet wired; foundation in place for future binding.
 
+### 6. Asset-Based Attribute Validation
+- Attribute typo validation is editor-driven (asset scan), not runtime-registration driven.
+- Validation command scans all AttributeDefinition and AttributeModifierDefinition assets.
+- Unknown modifier attribute references are logged with close-name suggestions.
+- Runtime lookup semantics remain exact-name by design.
+
 ## Testing Gaps
 
-- ❌ No unit tests for modifier priority ordering.
-- ❌ No test for DOT reapply idempotency.
-- ❌ No test for 100-zombie cross-contamination (should be impossible, but validate).
+- ✅ Modifier priority ordering covered (EditMode test).
+- ✅ DOT reapply idempotency covered (EditMode test).
+- ✅ Effect instance isolation per caster covered (EditMode test).
+- ✅ Explicit single-instance reuse compounding behavior documented by test.
 - ❌ No integration test for full damage pipeline (caster power → effect → damage → target mitigation).
 
 ## Known Limitations
@@ -168,9 +176,9 @@ public void TakeDamage(float amount, ICaster source = null) {
 
 ## Next Steps (High Priority)
 
-1. **Validator (P1, S effort)**: Startup check that modifier definitions resolve against known attributes.
-2. **Extract helper (P1, S effort)**: Deduplicate DamageEffect + DOTEffect modifier code.
-3. **Unit tests (P2, M effort)**: Priority ordering, reapply, 100-zombie scenario.
+1. **Validator automation (P1, S effort)**: Run editor asset validator automatically in CI/pre-build.
+2. **Integration tests (P2, M effort)**: full stat-flow cast-to-impact tests.
+3. **Unit test expansion (P2, M effort)**: multi-target and stress variants.
 
 ## Files Changed (Summary)
 

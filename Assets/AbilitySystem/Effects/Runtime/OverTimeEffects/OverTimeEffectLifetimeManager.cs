@@ -24,6 +24,8 @@ namespace AbilitySystem.Effects
 
         private readonly Dictionary<IAbilityTarget, Dictionary<int, OverTimeEffectGroup>> _activeOverTimeEffects = new();
         private readonly Dictionary<IAbilityTarget, Dictionary<Guid, Action>> _overTimeEffectHandlers = new();
+        [SerializeField] private float _pruneIntervalSeconds = 0.5f;
+        private float _timeSinceLastPrune;
 
 
         private void Awake()
@@ -89,6 +91,8 @@ namespace AbilitySystem.Effects
                 effect.EffectExpired -= handler;
                 handlersById.Remove(effect.Id);
             }
+
+            PruneTargetEntries(target);
         }
 
         private void Tick(float deltaTime)
@@ -107,6 +111,13 @@ namespace AbilitySystem.Effects
         public void FixedUpdate()
         {
             Tick(Time.fixedDeltaTime);
+
+            _timeSinceLastPrune += Time.fixedDeltaTime;
+            if (_timeSinceLastPrune >= _pruneIntervalSeconds)
+            {
+                PruneEmptyEntries();
+                _timeSinceLastPrune = 0f;
+            }
         }
         public void CleanUpTarget(IAbilityTarget target)
         {
@@ -131,6 +142,61 @@ namespace AbilitySystem.Effects
                     UnregisterOverTimeEffect(target, group.Effects[i]);
                 }
                 effectsById.Remove(effectTypeId);
+            }
+
+            PruneTargetEntries(target);
+        }
+
+        private void PruneTargetEntries(IAbilityTarget target)
+        {
+            if (_activeOverTimeEffects.TryGetValue(target, out var effectsById))
+            {
+                var emptyEffectTypeIds = new List<int>();
+                foreach (var kvp in effectsById)
+                {
+                    if (kvp.Value == null || kvp.Value.EffectCount == 0)
+                    {
+                        emptyEffectTypeIds.Add(kvp.Key);
+                    }
+                }
+
+                foreach (var effectTypeId in emptyEffectTypeIds)
+                {
+                    effectsById.Remove(effectTypeId);
+                }
+
+                if (effectsById.Count == 0)
+                {
+                    _activeOverTimeEffects.Remove(target);
+                }
+            }
+
+            if (_overTimeEffectHandlers.TryGetValue(target, out var handlersById) && (handlersById == null || handlersById.Count == 0))
+            {
+                _overTimeEffectHandlers.Remove(target);
+            }
+        }
+
+        private void PruneEmptyEntries()
+        {
+            var targetsToPrune = new List<IAbilityTarget>(_activeOverTimeEffects.Keys);
+            foreach (var target in targetsToPrune)
+            {
+                PruneTargetEntries(target);
+            }
+
+            var handlerTargetsToRemove = new List<IAbilityTarget>();
+            foreach (var kvp in _overTimeEffectHandlers)
+            {
+                if (kvp.Value == null || kvp.Value.Count == 0)
+                {
+                    handlerTargetsToRemove.Add(kvp.Key);
+                }
+            }
+
+            foreach (var target in handlerTargetsToRemove)
+            {
+                _overTimeEffectHandlers.Remove(target);
             }
         }
     }

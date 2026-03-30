@@ -98,6 +98,12 @@ _damagePerTick = new Attribute(baseTickDamage);
    - `OnRuntimeValueChanged`, `OnBaseValueChanged` events on Attribute.
    - Enables future UI/animation binding without threading it everywhere.
 
+4. **Asset-based attribute validation (editor-time)**:
+    - Attribute typo validation is now driven by ScriptableObject asset scanning in the editor.
+    - Validation does not depend on runtime registration state or scene load order.
+    - Menu: `Ability System/Validation/Validate Attribute References`.
+    - Unknown modifier attribute names produce errors with close-name suggestions.
+
 ## Quick Start (FireBall demo)
 1. Create an `AbilityDefinition` SO and add `actionDefinitions` in order:
    - `SetCenterActionDefinition` — writes `TargetPoint` into the `AbilityContext`.
@@ -197,10 +203,12 @@ OverTimeEffectLifetimeManager.Instance.ReApplyOverTimeEffectsModifier(target);
 ## Gotchas & Notes
 
 - `AbilityInstance` should null-check `actionDefinitions` for older assets.
-- **String attribute names are case-sensitive** and unvalidated at authoring time. Plan to add startup validator for typos.
+- **String attribute names are case-sensitive at runtime lookup**. Validation is provided by editor asset scan (`Validate Attribute References`).
+- Attribute name suggestions are normalization-aware (`ability_power`, `ability-power`, `AbilityPower` are treated as close for suggestion text), but lookup remains exact by design.
 - **Modifier priority is global per Attribute**, not per effect. If multiple effects apply modifiers to the same attribute, they compose in priority order.
 - `ConsumableAttribute` max is stored in `RuntimeValue` (base + modifiers). Current amount is separate `_current`. If RuntimeValue changes, Current clamps to new max.
 - **Snapshot semantics**: Damage/heal amounts lock in at effect creation. Target defensive logic (armor, shields) re-evaluates each impact. This prevents 100-zombie stacking.
+- `DamageEffect` instances are intended for single application. Reusing the same runtime instance can compound bound modifiers across applies. The pipeline creates a fresh effect per target apply.
 - DOT reapply: Call `ReApplyOverTimeEffectsModifier()` if source/target stats change mid-effect. Safe by design (clears old modifiers before re-adding).
 - Prefer `IAttributeHolder` for stat containers instead of concrete type checks.
 - Use the blackboard for optional, ability-specific data; keep common fields strongly typed on `AbilityContext`.
@@ -214,8 +222,16 @@ OverTimeEffectLifetimeManager.Instance.ReApplyOverTimeEffectsModifier(target);
 
 ## Recommended Next Priority Tasks
 - Decide on next modifier type(s): flat bonuses, conditional modifiers, or ability-level scaling.
-- Add startup validator for attribute name typos (check all modifier definitions resolve against known attributes).
-- Extract shared modifier resolution logic from DamageEffect + DOTEffect into helper (reduce duplication).
+- Expand editor validator automation (run on CI/pre-build) for attribute name typos.
 - Add clamping rules for consumable attributes (e.g., mana ≥ 0, health ≥ 0).
 - Test suite for stat changes, modifier composition, and DOT reapply scenarios.
 - Projectile model decision: self-contained vs pipeline-pausing. Recommendation: pipeline-pausing via `OnHit(HitData)` so the runner resumes after impact.
+
+## Current Test Coverage (EditMode)
+- Core runner/context tests: `Assets/Tests/AbilitySystemCoreTests.cs`.
+- Attributes/modifiers/effects tests: `Assets/Tests/AttributeModifierAndEffectsTests.cs`.
+- Covered currently:
+    - modifier priority ordering
+    - DOT modifier reapply idempotency
+    - effect-instance isolation per caster
+    - explicit single-instance DamageEffect compounding behavior

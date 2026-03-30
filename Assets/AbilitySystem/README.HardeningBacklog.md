@@ -1,6 +1,6 @@
 # Ability System Hardening Backlog
 
-Last Updated: 2026-03-29
+Last Updated: 2026-03-30
 Purpose: single source of truth for architecture hardening and MVP → production blockers.
 
 ## Scoring Model
@@ -10,48 +10,33 @@ Purpose: single source of truth for architecture hardening and MVP → productio
 
 ## Open Tasks
 
-1. **P1** Attribute name validation at startup (string-key fragility)
+1. **P1** Automate editor attribute validation in CI/pre-build (string-key fragility)
 - Effort: S
 - Impact: H
 - Why:
   - Attribute names are strings (e.g., "ability_power"). Typos fail at runtime.
-  - Modifiers reference attributes by name with no validation at authoring time.
+  - Modifiers reference attributes by name; editor validator exists but should run automatically.
 - Touch points:
-  - `Assets/AbilitySystem/Attributes and Modifiers/Runtime/`
-  - New util: AttributeNameValidator (check all modifier definitions resolve)
+  - `Assets/AbilitySystem/Editor/Validation/AttributeReferenceAssetValidator.cs`
+  - Build pipeline / CI pre-build step
 - Acceptance criteria:
-  - On startup, log warning for each modifier that references unknown attribute names.
-  - Suggest nearest-match for typos (future: quick-fix in editor).
+  - Validator runs in CI/pre-build and fails or warns on unknown references.
+  - Suggest nearest-match for typos in validation output.
 
-2. **P1** Extract shared modifier resolution helper (code deduplication)
-- Effort: S  
-- Impact: M
-- Why:
-  - DamageEffect + DOTEffect double the modifier resolution code (Caster/Target binding).
-  - Will triple/quadruple when adding Heal/Shield/Buff effects.
-- Touch points:
-  - `Assets/AbilitySystem/Effects/Runtime/DamageEffect.cs`
-  - `Assets/AbilitySystem/Effects/Runtime/DOTEffect.cs`
-  - New util: ModifierResolutionHelper or similar
-- Acceptance criteria:
-  - Single method handles modifier binding for any effect type.
-  - DamageEffect + DOTEffect both call it; 15+ lines saved each.
-
-3. **P2** Modifier composition unit tests
+2. **P2** Modifier composition unit tests expansion
 - Effort: M
 - Impact: H
 - Why:
-  - Core stat scaling has no automated validation.
+  - Core stat scaling now has baseline tests; expand to stress and edge cases.
   - Priority ordering, stacking, and reapply are critical paths.
 - Touch points:
   - `Assets/Tests/` or new `Assets/AbilitySystem/Tests/Modifiers/`
 - Acceptance criteria:
-  - Test: modifier priority ordering is respected.
-  - Test: modifier reapply is idempotent (same output on N calls).
-  - Test: no cross-contamination between DamageEffect instances.
-  - Test: 100-zombie scenario (parallel abilities, shared target—ensure no stacking).
+  - Add stress test: 100-zombie scenario (parallel abilities, shared target).
+  - Add multi-target integration path through ApplyEffectAction.
+  - Add regression tests for effect lifecycle edge cases.
 
-4. **P2** Consumable attribute clamping rules
+3. **P2** Consumable attribute clamping rules
 - Effort: S
 - Impact: M
 - Why:
@@ -64,7 +49,7 @@ Purpose: single source of truth for architecture hardening and MVP → productio
   - Current is always ≤ RuntimeValue (max).
   - Document contract clearly (zero-based assertions, if desired).
 
-5. **P2** Cast null-hardening final pass
+4. **P2** Cast null-hardening final pass
 - Effort: S
 - Impact: H
 - Why:
@@ -76,7 +61,7 @@ Purpose: single source of truth for architecture hardening and MVP → productio
   - `Execute`, `Cancel`, and `Interrupt` are safe when cast construction fails.
   - Null `ActionDefinitions` path is guarded with clear logs.
 
-6. **P2** Scene-safe cleanup for singleton managers
+5. **P2** Scene-safe cleanup for singleton managers
 - Effort: M
 - Impact: H
 - Why:
@@ -89,7 +74,7 @@ Purpose: single source of truth for architecture hardening and MVP → productio
   - Reloading scene repeatedly does not grow stale entries.
   - No stale-reference warnings after scene transitions.
 
-7. **P3** Ability add/remove symmetry (single remove path)
+6. **P3** Ability add/remove symmetry (single remove path)
 - Effort: S
 - Impact: M
 - Why:
@@ -100,7 +85,7 @@ Purpose: single source of truth for architecture hardening and MVP → productio
   - `RemoveAbility(...)` unsubscribes cast complete/cancel/interrupt callbacks for that ability.
   - Re-add/remove cycles do not leak signal subscriptions.
 
-8. **P3** Attribute change event binding framework
+7. **P3** Attribute change event binding framework
 - Effort: M
 - Impact: L
 - Why:
@@ -113,7 +98,7 @@ Purpose: single source of truth for architecture hardening and MVP → productio
   - Example code demonstrates subscribing to stat changes for UI.
   - Patterns documented (one-time subscribe vs continual listener).
 
-9. **P3** Architecture test baseline
+8. **P3** Architecture test baseline
 - Effort: M
 - Impact: H
 - Why:
@@ -165,7 +150,7 @@ Purpose: single source of truth for architecture hardening and MVP → productio
 
 7. [x] **String attribute name fragility accepted (MVP)** (2026-03-29)
 - Evidence:
-  - No validator implemented yet (listed as P1 hardening task).
+  - Runtime lookup remains exact-name by design.
   - Documented in README as known limitation + mitigation path.
   - Authoring works smoothly; runtime typos fail at effect apply (acceptable for MVP).
 
@@ -194,12 +179,34 @@ Purpose: single source of truth for architecture hardening and MVP → productio
   - `Assets/AbilitySystem/Core/Runtime/AbilityInstance.cs` exposes `Dispose()`.
   - `Assets/Demo/Player/Player.cs` disposes abilities in `OnDestroy()`.
 
+13. [x] **Editor asset-based attribute reference validation** (2026-03-30)
+- Evidence:
+  - `Assets/AbilitySystem/Editor/Validation/AttributeReferenceAssetValidator.cs` scans authored attribute and modifier assets.
+  - Validation reports unknown modifier references with close-name suggestions.
+  - Runtime attribute registry/disposal bookkeeping removed from Attribute/Player/Enemy runtime paths.
+- Outcome:
+  - Validation is deterministic and no longer coupled to runtime object lifetime or load order.
+
+14. [x] **Modifier resolution helper extraction** (2026-03-30)
+- Evidence:
+  - `Assets/AbilitySystem/Effects/Runtime/ModifierResolutionHelper.cs` added.
+  - `Assets/AbilitySystem/Effects/Runtime/DamageEffect.cs` and `Assets/AbilitySystem/Effects/Runtime/DOTEffect.cs` now call shared helper.
+- Outcome:
+  - Caster/Target binding logic is centralized and easier to extend for new effect types.
+
+15. [x] **Baseline modifier/effect tests added** (2026-03-30)
+- Evidence:
+  - `Assets/Tests/AttributeModifierAndEffectsTests.cs` added.
+  - Tests cover priority ordering, DOT reapply idempotency, effect-instance isolation, and single-instance reuse compounding behavior.
+- Outcome:
+  - Core modifier behavior is guarded by automated EditMode tests.
+
 ## Suggested Next Task (Priority Order)
 
 ### Immediate (Session N+1)
-1. **Attribute name validator** (P1, Effort S): Warn on missing attributes at startup.
-2. **Modifier resolution helper** (P1, Effort S): Extract DamageEffect + DOTEffect duplication.
-3. **Modifier composition tests** (P2, Effort M): Priority ordering, reapply, cross-contamination.
+1. **CI/pre-build validator automation** (P1, Effort S): Run editor asset validator as part of pipeline.
+2. **Modifier test expansion** (P2, Effort M): stress and integration coverage.
+3. **ApplyEffectAction integration tests** (P2, Effort M): end-to-end stat flow.
 
 ### Medium-term (Session N+2/N+3)
 4. **Consumable clamping rules** (P2, Effort S): Ensure Current ≤ RuntimeValue always.

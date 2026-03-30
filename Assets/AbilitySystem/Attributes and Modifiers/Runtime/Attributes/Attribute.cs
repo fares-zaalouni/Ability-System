@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 namespace AbilitySystem.Attributes
 {
@@ -30,6 +29,7 @@ namespace AbilitySystem.Attributes
         public Attribute(float baseValue, string name = "-No Name-")
         {
             Name = name;
+
             _base = baseValue;
             _runtime = baseValue;
         }
@@ -135,6 +135,6 @@ namespace AbilitySystem.Attributes
             if(amount != 0)
                 OnRuntimeValueChangedInvoke();
         }
-
+        
     }
 }

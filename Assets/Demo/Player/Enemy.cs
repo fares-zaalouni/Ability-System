@@ -97,6 +97,4 @@ IDamageable
         _consumableAttributes.Add(health.Name, health);
         Debug.Log($"Initialized resource: {health.Name} with MaxAmount: {health.RuntimeValue} and CurrentAmount: {health.CurrentAmount}");
     }
-
-    
 }

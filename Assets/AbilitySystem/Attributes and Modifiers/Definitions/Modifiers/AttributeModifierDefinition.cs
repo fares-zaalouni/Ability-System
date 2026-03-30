@@ -8,6 +8,7 @@ namespace AbilitySystem.Attributes
         [SerializeField] private ModifierApplicationStrategy _applicationStrategy;
         [SerializeField] private ModifierSource _source;
         [SerializeField] private string _attributeName;
+        public string AttributeName => _attributeName;
         [SerializeField] [Tooltip("Percent %")] private float _percent;
 
         public override IModifier CreateRuntimeModifier()

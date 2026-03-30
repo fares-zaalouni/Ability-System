@@ -34,7 +34,6 @@ namespace AbilitySystem.Attributes
         }
         public void Apply(Attribute attribute)
         {
-
             switch (_applicationStrategy)
             {
                 case ModifierApplicationStrategy.Base:

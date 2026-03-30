@@ -1,495 +1,443 @@
 # AI Agent Handoff: Ability System Project (Deep Technical Dossier)
 
-Last Updated: 2026-03-24
-Repository Root: c:\Unity\Ability-System
-Target Reader: External AI agent (Claude, GPT, etc.) continuing implementation/hardening work.
+Last Updated: 2026-03-30
+Repository Root: c:/Unity/Ability-System
+Target Reader: External AI agent (Claude, GPT, etc.) continuing implementation or hardening work.
 
 ## 1) Executive Summary
-This repository contains a data-driven Unity ability framework built around ScriptableObject definitions that create runtime action pipelines.
+This repository contains a data-driven Unity ability framework built on ScriptableObject definitions that construct runtime action pipelines.
 
 Design center:
 - Compose abilities from action definitions.
-- Execute in-order runtime actions through a runner.
-- Pass data between actions via typed context payloads.
-- Support asynchronous/sustained actions (wait, repeat, signal-driven behavior) with explicit cancel/interrupt aftermath semantics.
+- Execute ordered runtime actions through a runner.
+- Share data through typed context payloads and target lists.
+- Support sustained actions (wait, repeat, signal-driven logic) with explicit cancel and interrupt aftermath behavior.
+- Scale effects through an Attributes/Modifiers stat system with source-aware modifier resolution.
 
 Current maturity:
 - Core architecture is coherent and usable.
-- Re-entrancy hardening is partially completed and documented.
-- Typed context migration is active and largely in place.
-- Baseline tests exist but are still shallow compared to behavior surface.
+- Context-first effects refactor is completed.
+- Attributes/Modifiers pipeline is active for instant and over-time effects.
+- DOT modifier reapply path is implemented and idempotent by design.
+- Test coverage remains shallow compared to behavior surface.
+
+Architecture grade (current): 8.5/10.
 
 ## 2) Source-Of-Truth Priority (Important)
 When docs and code disagree, trust in this order:
-1. Runtime source in `Assets/AbilitySystem/Core/Runtime/*`.
-2. Action/effect/targeting runtime source.
-3. Focused decision logs (`README.RunnerReentrancy.md`, hardening backlog).
-4. General README (`Assets/AbilitySystem/README.md`) last.
+1. Runtime source under Assets/AbilitySystem/Core/Runtime and effect runtime folders.
+2. Action, effect, over-time, and targeting runtime source.
+3. Focused logs and summaries:
+   - README.RunnerReentrancy.md
+   - README.HardeningBacklog.md
+   - ARCHITECTURE_SUMMARY.md
+4. General README under Assets/AbilitySystem/README.md.
 
 Reason:
-- General docs can lag behind implementation.
-- Some backlog items are already partially fixed in code while still listed as open in backlog text.
+- General docs can lag implementation.
+- Backlog tasks can remain listed after partial fixes.
 
-## 3) System Architecture Map
-Static authoring to runtime execution:
-1. `AbilityDefinition` stores authored data: name, cooldown, costs, actions, and cast lifecycle signals.
-2. `AbilityInstance` creates runtime costs and cooldown state for one caster-bound ability instance.
-3. `AbilityInstance.Cast(...)` creates `AbilityCast` with optional typed initial dependencies.
-4. `AbilityCast` builds `AbilityContext` + runtime `IAbilityAction` list from definitions.
-5. `AbilityRunner` walks action list and executes each action.
-6. Actions mutate/read `AbilityContext` payloads, targets, and runtime signals.
+## 3) End-To-End Runtime Flow (Most Important)
+Authoring to execution:
+1. AbilityDefinition stores authored cast data: cooldown, costs, actions, signals.
+2. AbilityInstance binds a definition to a caster and tracks runtime state.
+3. AbilityInstance.Cast(...) creates AbilityCast with optional typed dependencies.
+4. AbilityCast builds AbilityContext and runtime action list from definitions.
+5. AbilityRunner executes actions in order using explicit Next() progression.
+6. ApplyEffectAction creates runtime effect instances using context-first construction.
+7. Effect resolves modifiers, computes snapshot offensive values, and applies to targets.
+8. Target.TakeDamage(...) applies dynamic defensive logic at impact time.
 
-Execution model:
-- Single runner, index-based progression via `runner.Next()`.
-- Synchronous actions call `Next()` immediately.
-- Sustained actions keep control and later resolve via complete/cancel/interrupt paths.
+Detailed effect path:
+1. ApplyEffectAction loops resolved targets.
+2. For each target:
+   - effect = effectDefinition.CreateEffect(context)
+   - result = effect.ApplyTo(target)
+3. Effect.ApplyTo(target):
+   - resolves modifier source attributes from caster or target
+   - binds source attribute into each modifier
+   - applies modifiers to local damage/heal attribute object
+   - sends computed runtime value to target contract
+
+Key model decision:
+- Snapshot offense, dynamic defense.
+- Offensive scaler inputs are captured at effect apply time.
+- Defense remains live in target logic per hit or tick.
 
 ## 4) Core Runtime Contracts And Responsibilities
 
 ### 4.1 Core entities
-- `AbilityDefinition` (`Core/Definition/AbilityDefinition.cs`): authored blueprint.
-- `AbilityInstance` (`Core/Runtime/AbilityInstance.cs`): owns costs, cast list, cooldown id, and lifecycle disposal.
-- `AbilityCast` (`Core/Runtime/AbilityCast.cs`): one execution attempt; wraps a runner and exposes cast end events.
-- `AbilityRunner` (`Core/Runtime/AbilityRunner.cs`): sequential action executor + control-flow endpoints.
-- `AbilityContext` (`Core/Runtime/AbilityContext.cs`): typed data/targets/signals transport between actions.
+- AbilityDefinition (Core/Definition/AbilityDefinition.cs): authored blueprint.
+- AbilityInstance (Core/Runtime/AbilityInstance.cs): owns costs, cooldown identity, cast list, lifecycle cleanup.
+- AbilityCast (Core/Runtime/AbilityCast.cs): one execution attempt, wraps runner, exposes completion events.
+- AbilityRunner (Core/Runtime/AbilityRunner.cs): sequential executor and stop semantics owner.
+- AbilityContext (Core/Runtime/AbilityContext.cs): typed payload, caster, targets, signal registry.
 
-### 4.2 Caster/resource contracts
-- `ICaster`: grant/remove ability interface; gameplay owner abstraction.
-- `IResourceBearer`: resource consumption and lookup abstraction for costs/conditions.
-- `IResource`: resource shape (`CurrentAmount`, `MaxAmount`, consume checks).
+### 4.2 Gameplay contracts
+- ICaster: gameplay owner abstraction for ability ownership and source attribution.
+- IAbilityTarget: target contract for targeting and effect application boundaries.
+- IDamageable: damage intake boundary with optional caster source.
+- IAttributeHolder: attribute access contract for modifier source lookups and cost checks.
 
-### 4.3 Invariants you should preserve
-- Runner progresses only via explicit `Next()` from actions or aftermath logic.
-- `AbilityContext` payload keys are `Type`, not arbitrary strings.
-- Sub-runners must be callback-detached before cleanup stops to avoid re-entrant event loops.
-- Action definitions are factory objects only; runtime behavior belongs in runtime action classes.
+### 4.3 Invariants to preserve
+- Runner progression happens only via explicit Next() or aftermath.
+- Context payload keys are Type-based in typed blackboard APIs.
+- Sub-runner callbacks must be detached before owner cleanup stop calls.
+- Definitions are factories only; behavior lives in runtime classes.
+- Effect instances are per-application and do not share mutable modifier binding state globally.
 
 ## 5) AbilityRunner Semantics (Critical)
-`AbilityRunner` supports two stop families:
+Stop families:
 
 1. Propagating stops:
-- `Cancel()`
-- `Interrupt()`
+- Cancel()
+- Interrupt()
 
 Behavior:
-- Calls current `SustainedAction` cancel/interrupt method.
-- If action returns true, runner executes `TakeAftermathAction(...)`.
-- Aftermath can `Next()`, emit `OnCancelled`, or emit `OnInterrupted`.
+- If current action is SustainedAction, runner calls action cancel or interrupt path.
+- If action returns true, runner executes configured aftermath handling.
+- Aftermath can:
+  - continue with Next()
+  - emit OnCancelled
+  - emit OnInterrupted
 
-2. Silent stops (sub-runner ownership cleanup):
-- `StopSilentlyAsCancelled()`
-- `StopSilentlyAsInterrupted()`
+2. Silent stops (owner cleanup):
+- StopSilentlyAsCancelled()
+- StopSilentlyAsInterrupted()
 
 Behavior:
-- Calls child action cancel/interrupt but does not run aftermath and emits no events.
+- Calls child cancel or interrupt path without aftermath and without parent-facing terminal events.
 
-Why this exists:
-- Prevent parent/child re-entrancy loops when owner actions clean up spawned child runners.
+Why:
+- Avoid parent-child re-entrancy loops while cleaning up spawned sub-runners.
 
 ## 6) Context Model: Typed Blackboard + Runtime Signal Registry
-`AbilityContext` contains:
-- `Caster` (`ICaster`).
-- `Targets` (`List<IAbilityTarget>`).
-- `_typedBlackboard` (`Dictionary<Type, object>`).
+AbilityContext contains:
+- Caster (ICaster)
+- Targets (List<IAbilityTarget>)
+- typed blackboard (Dictionary<Type, object>)
+- runtime signal registry payload
 
 Key APIs:
-- `Set<T>(T value)` stores by `typeof(T)`.
-- `TryGet<T>(out T value)` retrieves exact type match.
-- `SetTargets(List<IAbilityTarget>)` replaces target list.
-- `Fork()` snapshots targets + typed entries into a new context object.
-- `SetRuntimeSignal(SignalDefinition, RuntimeSignal)` stores per-cast signal instances.
-- `TryGetRuntimeSignal(...)` retrieves per-cast runtime signals.
+- Set<T>(T value)
+- TryGet<T>(out T value)
+- SetTargets(List<IAbilityTarget>)
+- Fork()
+- SetRuntimeSignal(SignalDefinition, RuntimeSignal)
+- TryGetRuntimeSignal(...)
 
-`RuntimeSignalRegistry`:
-- Stored inside context as typed payload.
-- Maps `SignalDefinition` object references to runtime signal instances.
+Fork caveat:
+- Fork performs shallow copy for payload dictionary values.
+- Reference-type payloads remain shared unless caller deep-copies intentionally.
 
-Important caveat:
-- `Fork()` copies dictionary references shallowly. Value objects are not deep-cloned.
+Why this matters for agents:
+- Sub-runners built from forked contexts can still observe shared reference payload mutations.
+- Keep mutable payload objects minimal or intentionally immutable.
 
 ## 7) Action System: Definition To Runtime Mapping
 
 ### 7.1 Base abstractions
-- `AbilityActionDefinition`: ScriptableObject factory with `CreateRuntimeAction()`.
-- `IAbilityAction`: runtime behavior contract.
-- `SustainedActionDefinition`: adds interrupt/cancel flags and aftermath choices.
-- `SustainedAction`: runtime base class implementing cancel/interrupt capability contract.
+- AbilityActionDefinition: ScriptableObject factory.
+- IAbilityAction: runtime execution contract.
+- SustainedActionDefinition: cancel and interrupt capability plus aftermath config.
+- SustainedAction: runtime base implementing stop capability contract.
 
-### 7.2 Core actions and exact behavior
-- `TargetingAction`:
-  - Runs strategy, writes full target list into context, advances.
-- `ApplyEffectAction`:
-  - Applies effect instance per target, aggregates applied/skipped/failed counts into `EffectApplySummary`, warns in debug if none applied.
-- `WaitAction` (sustained):
-  - Starts coroutine wait; on natural finish writes elapsed status and advances; on cancel/interrupt stops coroutine and writes partial wait status.
-- `RepeatAction` (sustained):
-  - Ticks sub-action sequences over interval/duration using child runners with `context.Fork()`; tracks active child runners and cleanup mode.
-- `ConditionalAction`:
-  - Evaluates condition, runs chosen branch in sub-runner, propagates completion/cancel/interrupt to parent accordingly.
-- `SpawnProjectileAction`:
-  - Reads `ProjectileSpawnPoint`; instantiates projectile; publishes runtime signals for hit/destroy slots if configured; writes projectile hit/destroy payloads to context when events fire.
-- `WaitForSignalAction` (sustained):
-  - Prefers per-cast runtime signal if present in context, else subscribes to global `SignalBus`; advances once signal arrives.
-- `RaiseSignalAction`:
-  - Raises global signal bus event.
-- `RaiseRuntimeSignalAction`:
-  - Raises per-cast runtime signal if context has one for slot.
-- `DoOnSignalAction` (sustained):
-  - Waits for trigger signal; each trigger spawns child sub-runner on forked context; waits for exit signal, then cleans child runners according to configured aftermath + cleanup mode.
+### 7.2 Core actions and behavior summary
+- TargetingAction:
+  - runs strategy, writes full target list to context, advances.
+- ApplyEffectAction:
+  - creates effects with CreateEffect(context), applies per target, writes EffectApplySummary.
+- WaitAction (sustained):
+  - coroutine-based wait with natural and stop-state outputs.
+- RepeatAction (sustained):
+  - ticks child sequences over interval and duration using context forks.
+- ConditionalAction:
+  - evaluates condition, runs branch runner, propagates terminal outcome.
+- SpawnProjectileAction:
+  - instantiates projectile and writes hit or destroy payloads or signals.
+- WaitForSignalAction (sustained):
+  - prefers runtime signal in context; falls back to global SignalBus.
+- RaiseSignalAction:
+  - raises global signal event.
+- RaiseRuntimeSignalAction:
+  - raises context-scoped runtime signal for the slot.
+- DoOnSignalAction (sustained):
+  - spawns sub-runners on trigger signal and exits on configured exit signal.
 
 ### 7.3 Sub-runner cleanup policy
-`SubRunnerCleanupMode` options:
-- `RespectChildAftermath`: detach callbacks, then child `Cancel/Interrupt` (propagating).
-- `ForceSilentStop`: detach callbacks, then silent stop child.
-- `DetachAndLetRun`: detach callbacks and do not stop children.
+SubRunnerCleanupMode:
+- RespectChildAftermath
+- ForceSilentStop
+- DetachAndLetRun
 
-`SubRunnerSubscriptions` ensures:
-- Callback references are tracked and detachable by identity.
-- Bulk `UnsubscribeAndApplyAftermath(...)` cleanup is centralized and consistent.
+SubRunnerSubscriptions centralizes callback tracking and detachment.
 
-## 8) Signal Model: Global And Per-Cast
+## 8) Attributes/Modifiers Architecture (Current Refactor)
 
-### 8.1 Global channel
-`SignalBus`:
-- Static dictionary `SignalDefinition -> List<Action<AbilityContext>>`.
-- Subscribe/unsubscribe/raise APIs.
+### 8.1 Runtime stat types
+Attribute:
+- Fields:
+  - BaseValue
+  - RuntimeValue
+  - modifiers list
+- Behavior:
+  - RecalculateRuntimeValues applies all modifiers in priority order.
+  - Supports AddModifier, AddModifiers, ClearModifiers.
+  - Emits OnRuntimeValueChanged and OnBaseValueChanged.
 
-Risk:
-- Static lifetime can leak handlers if not unsubscribed or if scene objects die unexpectedly.
+ConsumableAttribute (extends Attribute):
+- Adds CurrentAmount.
+- Intended contract: 0 <= CurrentAmount <= RuntimeValue.
+- Used for health, mana, and similar consumables.
+- Emits OnCurrentAmountChanged.
 
-### 8.2 Per-cast channel
-`RuntimeSignal`:
-- Lightweight event wrapper stored in a cast context.
-- Isolates simultaneous casts using same authored `SignalDefinition` slot.
+### 8.2 Definition layer
+AttributeDefinition:
+- ScriptableObject factory for runtime Attribute.
 
-Pattern in codebase:
-- Producer action creates and stores runtime signal in context.
-- Consumer action first tries runtime signal lookup, falls back to global bus.
+ConsumableAttributeDefinition:
+- ScriptableObject factory for ConsumableAttribute with max and initial current values.
 
-## 9) Targeting Subsystem
-Definitions:
-- `TargetingStrategyDefinition` -> runtime strategy factory.
-- `SingleTargetStrategyDefinition` (precision sphere or projectile-hit based).
-- `AOECircleTargetingStrategy`.
+AttributeModifierDefinition:
+- ScriptableObject factory for runtime AttributeModifier.
+- Config:
+  - priority
+  - source (Caster or Target)
+  - attributeName (string lookup key)
+  - percent input in inspector (0 to 100, converted to 0.0 to 1.0)
+  - strategy (Base, Runtime, Current)
 
-Runtime strategies:
-- `SingleTargetStrategy`:
-  - Projectile-hit mode: reads `ProjectileHitData` from context and resolves a single `IAbilityTarget` from hit collider.
-  - Point mode: reads `TargetPoint`, physics overlap sphere with precision radius and mask.
-- `AOECircleStrategy`:
-  - Reads `TargetPoint`, overlap sphere by radius/mask, returns all targetable `IAbilityTarget` components.
+### 8.3 Modifier runtime behavior
+AttributeModifier:
+- Source-aware binding to a bonus attribute at apply time.
+- Strategy behavior:
+  - Base: bonusAttribute.BaseValue * percent
+  - Runtime: bonusAttribute.RuntimeValue * percent
+  - Current: consumable.CurrentAmount * percent
+- Contribution is added into target attribute runtime composition.
 
-Target contracts:
-- `IAbilityTarget`: `IsTargetable()`.
-- `IDamageable`: `TakeDamage(float, ICaster source = null)`.
+### 8.4 Source resolution model
+For each modifier on an effect:
+1. Inspect source enum.
+2. Resolve IAttributeHolder:
+   - Caster source: effect context caster
+   - Target source: current target
+3. Lookup source attribute by name.
+4. Bind source attribute into modifier instance.
+5. Add modifier to local effect attribute and recalc runtime value.
 
-## 10) Effects Subsystem
+Why this model is safe:
+- Resolution happens per effect instance and target application.
+- No shared bound attribute references across different cast applications.
+- Shared `ModifierResolutionHelper` is now the canonical implementation used by DamageEffect and DOTEffect.
 
-### 10.1 Base effects
-- `AbilityEffectDefinition` creates runtime `IAbilityEffect`; identity uses `GetInstanceID()`.
-- `IAbilityEffect.ApplyTo(...)` returns `AbilityEffectApplyResult`:
-  - `Applied`
-  - `SkippedUnsupportedTarget`
-  - `Failed`
+### 8.5 Attribute validator contract (editor asset scan)
+Intent:
+- Validator is for warnings and suggestions only.
+- Runtime attribute lookup remains exact-name by design.
 
-Concrete effects:
-- `DamageEffectDefinition` -> `DamageEffect`: applies direct damage to `IDamageable` targets.
+Execution model:
+1. Validation scans authored assets (AttributeDefinition and AttributeModifierDefinition) in editor.
+2. Validation does not depend on scene load order or runtime registration state.
+3. Run via menu command: Ability System/Validation/Validate Attribute References.
 
-### 10.2 Over-time effects
-Core classes:
-- `OverTimeEffectDefinition`: duration/tick/stack config + stacking policy.
-- `DOTEffectDefinition` -> `DOTEffect` (damage per tick times stacks).
-- `OverTimeEffect`: base runtime ticking/stack/duration lifecycle.
+Why:
+- Deterministic validation independent of runtime object lifetime.
+- Easy to run during authoring, pre-build, or CI.
+- Keeps runtime stat classes focused on gameplay behavior rather than validator bookkeeping.
 
-Manager and grouping:
-- `OverTimeEffectLifetimeManager` (`MonoBehaviour` singleton, DontDestroyOnLoad):
-  - Tracks target -> effectTypeId -> effect group.
-  - Registers/unregisters expiry handlers.
-  - Ticks effects in `FixedUpdate()`.
-- `OverTimeEffectGroup`:
-  - Collection + selection helpers (newest, oldest, least/most stacks, etc.).
+## 9) Effect System: Context-First Construction
 
-Stacking strategy:
-- `StackingPolicyDefinition` -> runtime `IStackingPolicy`.
-- `BasicStackingPolicy` supports duration refresh/extend and stack behaviors with optional source-scoping.
+### 9.1 Contract change
+IAbilityEffect apply signature is simplified to ApplyTo(target).
+AbilityContext is provided at effect creation through effect definition factory.
 
-Known risk:
-- Effect type identity uses `GetInstanceID()` which is runtime-session scoped; persistence/network determinism expectations should be made explicit before expansion.
+Current pattern:
+- effect = definition.CreateEffect(context)
+- effect.ApplyTo(target)
 
-### 10.3 Status effect lifecycle (explicit)
-This is the concrete lifecycle for over-time/status-style effects in current code.
+Why this matters:
+- Effects can read caster, level, metadata, and typed payloads at construction.
+- Apply call remains focused on target execution.
 
-1. Creation:
-- Producer action (typically `ApplyEffectAction`) calls `AbilityEffectDefinition.CreateEffect(source)`.
-- For DOT/over-time definitions this returns an `OverTimeEffect` subtype instance (for example `DOTEffect`).
+### 9.2 DamageEffect behavior
+DamageEffect runtime behavior:
+1. receives context and runtime modifier list at construction.
+2. on ApplyTo(target), resolves and binds all modifiers.
+3. computes final damage from local Attribute runtime value.
+4. sends damage to IDamageable.TakeDamage(finalDamage, context.Caster).
 
-2. First apply:
-- `IAbilityEffect.ApplyTo(target)` is called.
-- `OverTimeEffect.ApplyTo(...)` invokes `RegisterToTarget(target)`.
-- Registration delegates to `OverTimeEffectLifetimeManager.Instance.RegisterOverTimeEffect(target, effect)`.
+Usage caveat:
+- DamageEffect runtime instances are intended for single apply usage in pipeline flow.
+- Reusing the same runtime instance can compound modifiers across multiple ApplyTo calls.
+- Normal pipeline behavior creates fresh runtime effect instances per application.
 
-3. Group registration and stacking decision:
-- Lifetime manager resolves bucket by:
-  - target (`IAbilityTarget` key), then
-  - effect type id (`OverTimeEffect.EffectTypeId`).
-- Manager invokes runtime stacking policy:
-  - `effect.StackingPolicy.HandleStacking(target, newEffect, existingGroup)`.
-- Depending on policy flags, the new effect may:
-  - be inserted as a new entry,
-  - merge stacks into existing entries,
-  - refresh/extend durations of existing entries,
-  - or not be inserted.
+### 9.3 Over-time effects and DOT behavior
+OverTimeEffect base:
+- owns duration, tick cadence, stacks, source context.
+- exposes ApplyModifiers(target) extension point.
 
-4. Tick ownership:
-- `OverTimeEffectLifetimeManager.FixedUpdate()` drives ticking.
-- For each target and each effect group, manager calls `group.TickAll(deltaTime, target)`.
-- Each `OverTimeEffect.Tick(...)` updates remaining time and applies tick payload when interval conditions are met.
+DOTEffect:
+- stores per-instance _damagePerTick attribute.
+- ApplyModifiers(target) mirrors DamageEffect source-resolution logic.
+- ClearModifiers before re-add prevents duplicate stacking on reapply calls.
+- tick sends _damagePerTick.RuntimeValue * stacks to target damage contract.
 
-5. Expiration and unregister:
-- When an effect reaches expiration, `OverTimeEffect` raises `EffectExpired` once.
-- Manager-attached expiry handler invokes `UnregisterOverTimeEffect(target, effect)`.
-- Unregister removes effect from group and detaches stored handler reference.
+## 10) Over-Time Lifetime Ownership And Reapply Flow
+Ownership:
+- OverTimeEffectLifetimeManager owns active effect tracking and tick scheduling.
+- Grouping key is target + effect type identity.
+- OverTimeEffectGroup manages same-type collection behavior.
 
-6. Explicit cleanup paths:
-- `CleanUpTarget(target)` unregisters all effects for one target.
-- `CleanUpTargetEffectType(target, effectTypeId)` unregisters only one effect-type bucket.
+Lifecycle:
+1. effect ApplyTo(target) delegates registration to manager.
+2. manager resolves target and effect-type bucket.
+3. stacking policy decides insert, merge, refresh, or reject.
+4. FixedUpdate ticks groups and effects and runs periodic cleanup.
+5. expiry callback unregisters and detaches handlers.
 
-### 10.4 Status effect ownership model
-Ownership in current implementation:
-- Effect instance memory owner: `OverTimeEffectLifetimeManager` (indirect, by registry dictionaries).
-- Tick scheduler owner: `OverTimeEffectLifetimeManager` via `FixedUpdate()`.
-- Grouping/selection owner: `OverTimeEffectGroup` per target + effect-type bucket.
-- Stacking behavior owner: runtime `IStackingPolicy` instance created from definition.
-- Source identity owner: `OverTimeEffect.Source` (caster reference attached at creation).
-- Expiration subscription owner: lifetime manager (stores per-effect handler in `_overTimeEffectHandlers`).
+Cleanup and dictionary pruning (current hardening):
+- FixedUpdate runs `PruneEmptyEntries()` every 0.5 seconds (configurable via `_pruneIntervalSeconds`).
+- `UnregisterOverTimeEffect()` and `CleanUpTargetEffectType()` call `PruneTargetEntries(target)` immediately.
+- Prune methods remove empty effect-type groups and target buckets to prevent unbounded Dictionary growth.
+- Long-running sessions no longer accumulate stale entries over time.
 
-Non-owners (important):
-- `AbilityRunner` does not own active over-time effect lifetime.
-- `AbilityCast` end does not auto-dispose existing over-time effects on targets.
-- `AbilityContext` carries apply-time data but does not retain/tick effect registries.
+Reapply flow (current hardening):
+1. trigger stat state change on source or target.
+2. call OverTimeEffectLifetimeManager.ReApplyOverTimeEffectsModifier(target[, effectTypeId]).
+3. manager iterates active effects.
+4. each DOT clears old modifiers and rebinds based on current attributes.
+5. damage-per-tick runtime value is recomputed safely.
 
-## 11) Projectile Subsystem
-Runtime classes:
-- `Projectile` abstract base with `OnHit` and `OnDestroyed` events.
-- `StraightLineProjectile` implementation:
-  - Moves in `Update()`.
-  - Emits hit payload on trigger with normal estimation.
-  - Supports pierce count and destroys on lifetime expiration or terminal hit.
+Idempotency note:
+- repeated reapply calls should not accumulate duplicate modifiers due to clear-then-add design.
 
-Payloads:
-- `ProjectileHitData` (point, normal, collider).
-- `ProjectileDestroyData` (point, normal).
+## 11) Signal Model: Global And Per-Cast
 
-Integration point:
-- `SpawnProjectileAction` bridges projectile events into ability context + runtime signal slots.
+Global channel:
+- SignalBus static mapping SignalDefinition to subscriber list.
+- Useful for broad signaling, but requires unsubscribe discipline.
 
-## 12) Resources And Costs
-Definitions:
-- `ResourceDefinition` abstract.
-- `BaseResourceDefinition` -> `BaseResource` runtime.
-- `AbilityCostDefinition` -> `AbilityCost` struct.
+Per-cast channel:
+- RuntimeSignal stored in context registry.
+- isolates simultaneous casts using same authored signal definitions.
 
-Runtime:
-- `BaseResource` supports max/current/consume, includes regen amount field but no built-in ticking path.
-- `AbilityInstance` checks `IResourceBearer.CanConsumeCost(...)` then consumes on cast.
+Producer-consumer pattern:
+- producer action creates runtime signal and stores it in context.
+- consumer action first attempts runtime signal lookup and falls back to global bus.
 
-Open architecture gap:
-- Regeneration loop is still a backlog P0 item; there is no canonical central tick ownership in this module yet.
+## 12) Targeting And Projectile Integration
+Targeting strategies:
+- Single target via point precision or projectile hit payload.
+- AOE circle via overlap sphere and masks.
 
-## 13) Cooldown Architecture
-Components:
-- `Cooldown`: mutable duration state with start/force/tick/end event.
-- `CooldownManager` singleton:
-  - Tracks all cooldowns per caster and active cooldown subset.
-  - Updates cooldowns in `Update()`.
-  - Subscribes to cooldown ended events to remove from active map.
+Projectile integration:
+- SpawnProjectileAction publishes projectile hit and destroy payloads.
+- downstream actions can consume payloads for targeting, branching, or signaling.
 
-Cast integration note:
-- `AbilityInstance` starts cooldown via `CooldownManager.Instance.StartCooldown(_caster, Id)`.
-- Validate registration path for every ability lifecycle path; start call expects cooldown already registered.
+## 13) Cost, Resource, And Attribute Notes (Post-Refactor)
+Legacy ability cost wrappers were removed in favor of attribute-based cost flow.
 
-Known risk:
-- Manager stores keys by `ICaster`; scene reload or destroyed objects can leave stale dictionary entries if cleanup is incomplete.
+Current direction:
+- Attribute and consumable attributes are the primary stat and cost model.
+- Actors implement IAttributeHolder for stat retrieval and consumption checks.
+
+Agent caution:
+- older docs or assets may still reference removed Resource-era naming.
+- verify implementation in runtime code before applying old backlog assumptions.
 
 ## 14) Lifecycle Trace (Nominal Cast)
-1. Caller requests cast on `AbilityInstance`.
-2. Instance validates cooldown and costs.
-3. Costs consumed and cooldown start requested.
-4. `AbilityCast` created with initial dependencies.
-5. `AbilityRunner.Next()` begins first action.
-6. Actions mutate context and targets.
-7. Sustained actions eventually resolve via `Next`, cancel, or interrupt.
-8. Runner emits `OnCompleted`, `OnCancelled`, or `OnInterrupted`.
-9. `AbilityCast` forwards event with final context.
-10. `AbilityInstance` completion callback path removes callback mapping for that cast.
+1. caller requests cast on AbilityInstance.
+2. instance validates cooldown and cost constraints.
+3. cost consumption and cooldown start happen.
+4. AbilityCast created with initial dependencies.
+5. runner starts action pipeline with Next().
+6. actions mutate context and target lists.
+7. effect actions create context-bound effect instances and apply to targets.
+8. sustained actions resolve by complete, cancel, or interrupt paths.
+9. runner emits terminal state.
+10. cast forwards context and terminal event to listeners.
 
-## 15) Cancellation/Interrupt Semantics Trace
-
+## 15) Cancellation And Interrupt Trace
 Main runner:
-- If current action is not `SustainedAction`, cancel/interrupt has no effect.
-- If sustained and action returns false from cancel/interrupt, runner does not apply aftermath.
-- If returns true, aftermath drives next behavior (`None`, `Cancel`, `Interrupt`).
+- non-sustained current action: cancel or interrupt is effectively no-op.
+- sustained current action returning false on stop: no aftermath.
+- sustained returning true: configured aftermath path executes.
 
-Parent/child runners:
-- Owner action should avoid direct child `Cancel/Interrupt` calls unless callbacks are detached first.
-- Use `SubRunnerSubscriptions` and `SubRunnerCleanupMode` pathways.
+Parent-child runner safety:
+- detach child callbacks before any owner-initiated stop operation.
+- use SubRunnerSubscriptions helper and cleanup mode configuration.
 
 ## 16) Typed Context Payload Inventory (Confirmed)
-Located in `Core/Runtime/ContextData`:
-- `TargetPoint`
-- `ProjectileSpawnPoint`
-- `ProjectileLaunchDirection`
-- `RepeatTickCount`
-- `WaitStatus`
-- `EffectApplySummary`
+Context payload types currently documented in runtime usage include:
+- TargetPoint
+- ProjectileSpawnPoint
+- ProjectileLaunchDirection
+- RepeatTickCount
+- WaitStatus
+- EffectApplySummary
+- ProjectileHitData
+- ProjectileDestroyData
 
-Observed consumers/producers:
-- `TargetPoint`: consumed by `AOECircleStrategy`, `SingleTargetStrategy` (point mode).
-- `ProjectileSpawnPoint` and `ProjectileLaunchDirection`: consumed by `SpawnProjectileAction`.
-- `ProjectileHitData` and `ProjectileDestroyData`: produced by projectile events, consumed by signal/targeting chains.
-- `RepeatTickCount`: produced by `RepeatAction` stop path.
-- `WaitStatus`: produced by `WaitAction` natural and stop paths.
-- `EffectApplySummary`: produced by `ApplyEffectAction`.
+Producer-consumer examples:
+- TargetPoint produced by setup actions and consumed by targeting strategies.
+- EffectApplySummary produced by ApplyEffectAction.
+- projectile payloads produced by projectile events and consumed by downstream actions.
 
-## 17) Known Risks, Bugs, And Drift Areas
+## 17) Known Risks And Drift Areas
+1. String attribute names are typo-prone; mitigated by editor asset-based validator (run via menu or CI).  
+2. ✅ ~~Modifier source resolution logic is duplicated between DamageEffect and DOTEffect.~~ Extracted to `ModifierResolutionHelper`.
+3. ✅ Test coverage for modifier composition and reapply behavior expanded (priority ordering, DOT idempotency, isolation, single-instance contract documented).
+4. Static SignalBus can leak handlers if unsubscribe discipline breaks.
+5. ✅ ~~Manager dictionaries may retain stale scene references without robust cleanup paths.~~ Mitigated by periodic prune (0.5s interval) + immediate cleanup on unregister.
 
-1. Resource regeneration runtime path incomplete (P0 backlog).
-2. Singleton scene-safety/stale-reference risk in cooldown and over-time managers (P0 backlog).
-3. `SignalBus` static subscribers can leak if lifecycle unsubscribe discipline breaks.
-4. `AbilityInstance` cast bookkeeping still deserves stress tests for long-running sessions.
-5. `GetInstanceID()` identity semantics for effects/signals are session-scoped and should be explicitly accepted or replaced for deterministic contexts.
-6. Some doc statements are stale versus implementation (for example backlog item claiming null-guard gaps in cast methods while code now contains guards).
+## 18) Testing Status And Gaps
+Current tests cover baseline runner/context behavior and core stat pipeline behavior.
 
-## 18) Test Coverage Status
-EditMode tests in `Assets/Tests/AbilitySystemCoreTests.cs` currently verify:
-- Runner in-order execution + completion.
-- Cancel aftermath emits cancelled event when expected.
-- Interrupt with `None` aftermath advances to next action.
-- Typed context roundtrip and fork isolation.
-- Runtime signal set/get by definition.
+High-value missing tests:
+1. full integration: caster stat scaling -> effect snapshot -> target mitigation.
+2. multi-target and large-scale stress scenarios.
+3. broader lifecycle cleanup tests around scene transitions.
 
-Missing high-value tests:
-- Multi-cast parallelism with runtime signal isolation.
-- Sub-runner cleanup mode matrix behavior under cancel/interrupt storms.
-- `AbilityInstance.Dispose()` lifecycle cleanup under active sustained casts.
-- Manager stale reference cleanup under scene reload simulation.
-- End-to-end projectile signal chains (`spawn -> hit -> wait-for-signal -> branch`).
+Covered now:
+- modifier priority ordering composition.
+- DOT reapply idempotency under repeated calls.
+- per-caster effect instance isolation and explicit single-instance compounding behavior.
 
 ## 19) Backlog Alignment Notes
-Canonical backlog file:
-- `Assets/AbilitySystem/README.HardeningBacklog.md`
+Primary hardening list is in Assets/AbilitySystem/README.HardeningBacklog.md.
 
-Use backlog priorities, but verify current code before implementing an item because at least one listed P1 null-hardening item appears already implemented in runtime.
+Current priority direction:
+1. P1 attribute-name validator at startup.
+2. P1 shared helper extraction for modifier source resolution.
+3. P2 unit and integration tests for modifiers and reapply flow.
 
 ## 20) Safe First Actions For Next AI Session
-Do these before code changes:
-1. Re-read core files:
-   - `AbilityRunner.cs`, `AbilityContext.cs`, `SubRunnerSubscriptions.cs`, `RepeatAction.cs`, `DoOnSignalAction.cs`, `WaitForSignalAction.cs`.
-2. Re-read backlog and runner re-entrancy decision log.
-3. Validate current diagnostics in IDE to catch stale generated project state.
+Before changes:
+1. reread runtime contracts:
+   - AbilityRunner.cs
+   - AbilityContext.cs
+   - ApplyEffectAction.cs
+   - DamageEffect.cs
+   - DOTEffect.cs
+   - OverTimeEffectLifetimeManager.cs
+2. reread ARCHITECTURE_SUMMARY.md and hardening backlog.
+3. validate diagnostics in IDE before implementing.
 
-Then choose one contained task:
-- Task A: Add high-value tests (no behavior changes).
-- Task B: Implement deterministic resource regen path + tests.
-- Task C: Add scene-safe cleanup API and tests for singleton managers.
+Suggested contained tasks:
+1. add tests for modifier ordering and reapply idempotency.
+2. implement attribute-name startup validator.
+3. extract shared modifier-resolution helper used by DamageEffect and DOTEffect.
 
 ## 21) Recommended Implementation Order
-1. Tests first for current behavior contracts around runner/sub-runner semantics.
-2. Resource regen baseline (isolated, deterministic).
-3. Manager cleanup hardening.
-4. Optional identity semantics cleanup (effect/signal IDs) if needed by product direction.
+1. Tests first for current modifier and reapply contracts.
+2. Startup validator for string attribute name hardening.
+3. Modifier resolution helper extraction.
+4. Additional manager lifecycle cleanup and signal discipline checks.
 
-## 22) Guardrails While Modifying
-- Do not alter runner cancel/interrupt aftermath semantics without updating decision log and tests.
-- Do not replace typed context with string-key-only logic.
-- Avoid broad refactors mixed with behavior changes in one PR.
-- Keep per-action responsibilities narrow; compose via pipelines, not monolith actions.
-- Preserve `context.Fork()` usage for multi-trigger/multi-tick sub-runner scenarios unless replaced with an equivalent isolation strategy.
-
-## 23) Quick File Index
-Core definitions:
-- `Assets/AbilitySystem/Core/Definition/AbilityDefinition.cs`
-- `Assets/AbilitySystem/Core/Definition/AbilityActionDefinition.cs`
-- `Assets/AbilitySystem/Core/Definition/AbilityActions/*`
-- `Assets/AbilitySystem/Core/Definition/ConditionDefinition.cs`
-
-Core runtime:
-- `Assets/AbilitySystem/Core/Runtime/AbilityInstance.cs`
-- `Assets/AbilitySystem/Core/Runtime/AbilityCast.cs`
-- `Assets/AbilitySystem/Core/Runtime/AbilityRunner.cs`
-- `Assets/AbilitySystem/Core/Runtime/AbilityContext.cs`
-- `Assets/AbilitySystem/Core/Runtime/SubRunnerSubscriptions.cs`
-- `Assets/AbilitySystem/Core/Runtime/SubRunnerCleanupMode.cs`
-
-Actions runtime:
-- `Assets/AbilitySystem/Core/Runtime/AbilityActions/ApplyEffectAction.cs`
-- `Assets/AbilitySystem/Core/Runtime/AbilityActions/TargetingAction.cs`
-- `Assets/AbilitySystem/Core/Runtime/AbilityActions/WaitAction.cs`
-- `Assets/AbilitySystem/Core/Runtime/AbilityActions/RepeatAction.cs`
-- `Assets/AbilitySystem/Core/Runtime/AbilityActions/ConditionalAction.cs`
-- `Assets/AbilitySystem/Core/Runtime/AbilityActions/SpawnProjectileAction.cs`
-- `Assets/AbilitySystem/Core/Runtime/AbilityActions/DoOnSignalAction.cs`
-- `Assets/AbilitySystem/Core/Runtime/AbilityActions/WaitForSignalAction.cs`
-- `Assets/AbilitySystem/Core/Runtime/AbilityActions/RaiseSignalAction.cs`
-- `Assets/AbilitySystem/Core/Runtime/AbilityActions/RaiseRuntimeSignalAction.cs`
-
-Signals/cooldowns:
-- `Assets/AbilitySystem/Core/Runtime/Signals/SignalBus.cs`
-- `Assets/AbilitySystem/Core/Runtime/Signals/RuntimeSignal.cs`
-- `Assets/AbilitySystem/Core/Runtime/Cooldown/Cooldown.cs`
-- `Assets/AbilitySystem/Core/Runtime/Cooldown/CooldownManager.cs`
-
-Effects:
-- `Assets/AbilitySystem/Effects/Definition/*`
-- `Assets/AbilitySystem/Effects/Runtime/IAbilityEffect.cs`
-- `Assets/AbilitySystem/Effects/Runtime/DamageEffect.cs`
-- `Assets/AbilitySystem/Effects/Runtime/DOTEffect.cs`
-- `Assets/AbilitySystem/Effects/Runtime/OverTimeEffects/*`
-
-Targeting:
-- `Assets/AbilitySystem/Targeting/Definition/*`
-- `Assets/AbilitySystem/Targeting/Runtime/Strategies/*`
-- `Assets/AbilitySystem/Targeting/Runtime/Targets/*`
-
-Projectiles/resources:
-- `Assets/AbilitySystem/Projectiles/Runtime/*`
-- `Assets/AbilitySystem/Resources/Definitions/*`
-- `Assets/AbilitySystem/Resources/Runtime/*`
-
-Tests/docs:
-- `Assets/Tests/AbilitySystemCoreTests.cs`
-- `Assets/Tests/Tests.asmdef`
-- `Assets/AbilitySystem/README.HardeningBacklog.md`
-- `Assets/AbilitySystem/README.RunnerReentrancy.md`
-
-## 24) Hand-off Note To Next AI
-If you are making behavior changes, include in your output:
-1. Explicit statement of which runner semantics are affected.
-2. Exact list of new/updated tests and what contract each one protects.
-3. Any change in context payload shape or signal routing.
-4. Whether singleton cleanup behavior changed across scene transitions.
-
-This project is close to stable architecture but not yet fully hardened. Prefer small, test-backed increments.
-
-## 25) Ownership Matrix (Who Owns What)
-Use this table as the authoritative ownership snapshot for runtime responsibilities.
-
-| Runtime thing | Owner | Created by | Disposed/Stopped by | Notes |
-|---|---|---|---|---|
-| Ability definition data | ScriptableObject assets | Editor authoring | Unity asset lifecycle | Authoring-only, reused across casts |
-| Ability instance state (`AbilityInstance`) | Caller/player ability container | Gameplay code constructing instances | `AbilityInstance.Dispose()` or owner object teardown | Owns costs, cast list, cooldown id |
-| A single cast (`AbilityCast`) | `AbilityInstance` cast path | `AbilityInstance.Cast(...)` | Ends naturally or via cancel/interrupt; still tracked in instance list until cleanup paths run | Wraps one runner/context pair |
-| Runner execution (`AbilityRunner`) | `AbilityCast` | `AbilityCast` ctor | Internal completion/cancel/interrupt flow | Drives action sequence only |
-| Typed cast context (`AbilityContext`) | `AbilityCast`/runner graph | `AbilityCast` ctor | Eligible for GC after cast graph and references are gone | Forked for sub-runner isolation |
-| Child runners in repeat/signal actions | Parent sustained action instance | `RepeatAction` / `DoOnSignalAction` / `ConditionalAction` | Parent cleanup policy via `SubRunnerSubscriptions` + `SubRunnerCleanupMode` | Parent must detach callbacks first |
-| Global signal subscribers | Static `SignalBus` dictionary | Any signal action/caller | Explicit unsubscribe only | Static lifetime risk |
-| Per-cast runtime signals | `AbilityContext` (runtime signal registry) | Producer actions (for example projectile spawn) | Context lifetime end | Isolates simultaneous casts |
-| Cooldown state entries | `CooldownManager` | Registration flow + ability setup | Unregister APIs, caster cleanup, or manager lifecycle | Manager is persistent singleton |
-| Over-time effects on targets | `OverTimeEffectLifetimeManager` | Effect apply path | Expiration handlers or explicit cleanup APIs | Manager is persistent singleton |
-| Over-time grouping buckets | `OverTimeEffectLifetimeManager` | First register for target/type | Cleanup APIs or target/effect removal | Keyed by target + effectTypeId |
-| Projectile GameObject | Unity scene/object system | `SpawnProjectileAction` instantiate | Projectile self-destroy / scene unload | Emits hit/destroy events to action wiring |
-
-Owner-boundary rules:
-- A cast owns immediate action execution, not long-lived over-time effects.
-- Manager singletons own long-lived registries and therefore also own cleanup risk.
-- Parent sustained actions own child runner callback wiring and must detach before forcing stop.
+## 22) Practical Agent Notes
+- Prefer non-destructive, scoped changes and verify against current runtime code.
+- Avoid trusting stale assumptions from pre-2026-03-29 docs.
+- Preserve snapshot offense and dynamic defense semantics unless explicitly redesigning combat behavior.
+- If changing effect signatures, verify all definition factory and action call sites.
+- For DOT changes, always preserve clear-before-readd modifier behavior on reapply.

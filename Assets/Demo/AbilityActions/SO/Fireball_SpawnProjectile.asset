@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd625f412276ffb408e1d878c16a01f7, type: 3}
   m_Name: Fireball_SpawnProjectile
   m_EditorClassIdentifier: Assembly-CSharp::AbilitySystem.Core.SpawnProjectileActionDefinition
-  projectilePrefab: {fileID: 6366560951471785512, guid: 6f0f978f005b048409c4efe6c344e0de, type: 3}
+  projectilePrefab: {fileID: 2332621207713325753, guid: 90195c317b6801b458d4660481176c21, type: 3}
   _projectileHitSignal: {fileID: 11400000, guid: 426e9b5402b289c458eef68f09915520, type: 2}
   _projectileDestroySignal: {fileID: 11400000, guid: 407d66e700d307d42a903b88e2178183, type: 2}
