@@ -1,6 +1,6 @@
 # Ability System Hardening Backlog
 
-Last Updated: 2026-03-30
+Last Updated: 2026-03-31
 Purpose: single source of truth for architecture hardening and MVP → production blockers.
 
 ## Scoring Model
@@ -10,7 +10,20 @@ Purpose: single source of truth for architecture hardening and MVP → productio
 
 ## Open Tasks
 
-1. **P1** Automate editor attribute validation in CI/pre-build (string-key fragility)
+1. **P1** Ensure explicit duration policy wiring on over-time effect assets
+- Effort: S
+- Impact: H
+- Why:
+  - Runtime fallback defaults exist for resilience, but authored assets should be explicit.
+  - Missing `_durationPolicy` references can silently rely on defaults and drift behavior.
+- Touch points:
+  - `Assets/Demo/Effects/SO/*.asset` (all over-time effect definitions)
+  - `Assets/AbilitySystem/Effects/Definition/OverTimeEffects/OverTimeEffectDefinition.cs`
+- Acceptance criteria:
+  - Every over-time effect asset has explicit stacking + duration policy references.
+  - Demo behavior remains unchanged after explicit wiring.
+
+2. **P1** Automate editor attribute validation in CI/pre-build (string-key fragility)
 - Effort: S
 - Impact: H
 - Why:
@@ -23,20 +36,20 @@ Purpose: single source of truth for architecture hardening and MVP → productio
   - Validator runs in CI/pre-build and fails or warns on unknown references.
   - Suggest nearest-match for typos in validation output.
 
-2. **P2** Modifier composition unit tests expansion
+3. **P2** Modifier/effect integration test expansion
 - Effort: M
 - Impact: H
 - Why:
-  - Core stat scaling now has baseline tests; expand to stress and edge cases.
-  - Priority ordering, stacking, and reapply are critical paths.
+  - Core stat scaling and over-time policy matrix now have baseline tests; expand to stress and full cast flows.
+  - Priority ordering, policy interaction, and multi-target paths are critical paths.
 - Touch points:
   - `Assets/Tests/` or new `Assets/AbilitySystem/Tests/Modifiers/`
 - Acceptance criteria:
   - Add stress test: 100-zombie scenario (parallel abilities, shared target).
   - Add multi-target integration path through ApplyEffectAction.
-  - Add regression tests for effect lifecycle edge cases.
+  - Add end-to-end tests for over-time stacking + duration behavior through full ability casts.
 
-3. **P2** Consumable attribute clamping rules
+4. **P2** Consumable attribute clamping rules
 - Effort: S
 - Impact: M
 - Why:
@@ -49,7 +62,7 @@ Purpose: single source of truth for architecture hardening and MVP → productio
   - Current is always ≤ RuntimeValue (max).
   - Document contract clearly (zero-based assertions, if desired).
 
-4. **P2** Cast null-hardening final pass
+5. **P2** Cast null-hardening final pass
 - Effort: S
 - Impact: H
 - Why:
@@ -61,7 +74,7 @@ Purpose: single source of truth for architecture hardening and MVP → productio
   - `Execute`, `Cancel`, and `Interrupt` are safe when cast construction fails.
   - Null `ActionDefinitions` path is guarded with clear logs.
 
-5. **P2** Scene-safe cleanup for singleton managers
+6. **P2** Scene-safe cleanup for singleton managers
 - Effort: M
 - Impact: H
 - Why:
@@ -74,7 +87,7 @@ Purpose: single source of truth for architecture hardening and MVP → productio
   - Reloading scene repeatedly does not grow stale entries.
   - No stale-reference warnings after scene transitions.
 
-6. **P3** Ability add/remove symmetry (single remove path)
+7. **P3** Ability add/remove symmetry (single remove path)
 - Effort: S
 - Impact: M
 - Why:
@@ -85,7 +98,7 @@ Purpose: single source of truth for architecture hardening and MVP → productio
   - `RemoveAbility(...)` unsubscribes cast complete/cancel/interrupt callbacks for that ability.
   - Re-add/remove cycles do not leak signal subscriptions.
 
-7. **P3** Attribute change event binding framework
+8. **P3** Attribute change event binding framework
 - Effort: M
 - Impact: L
 - Why:
@@ -98,7 +111,7 @@ Purpose: single source of truth for architecture hardening and MVP → productio
   - Example code demonstrates subscribing to stat changes for UI.
   - Patterns documented (one-time subscribe vs continual listener).
 
-8. **P3** Architecture test baseline
+9. **P3** Architecture test baseline
 - Effort: M
 - Impact: H
 - Why:
@@ -201,11 +214,34 @@ Purpose: single source of truth for architecture hardening and MVP → productio
 - Outcome:
   - Core modifier behavior is guarded by automated EditMode tests.
 
+16. [x] **Over-time policy split (stacking vs duration)** (2026-03-31)
+- Evidence:
+  - `DurationPolicyDefinition`, `IDurationPolicy`, and `BasicDurationPolicy` added.
+  - `OverTimeEffectDefinition` now has `_durationPolicy` alongside `_stackingPolicy`.
+  - `BasicStackingPolicy` no longer owns duration refresh logic.
+- Outcome:
+  - Clear separation of concerns between stack behavior and duration behavior.
+
+17. [x] **Over-time policy regression tests expanded** (2026-03-31)
+- Evidence:
+  - `Assets/Tests/AttributeModifierAndEffectsTests.cs` now includes:
+    - manager snapshot behavior test for duration-on-preexisting effects
+    - first-apply stacking behavior test across stacking modes
+    - same-source duration extension behavior test
+- Outcome:
+  - Core stacking/duration interaction paths are now protected against regressions.
+
+18. [x] **Tick iteration safety hardening** (2026-03-31)
+- Evidence:
+  - `OverTimeEffectLifetimeManager.Tick(...)` migrated from nested foreach loops to indexed loops over snapshots.
+- Outcome:
+  - Prevents collection-modification issues when effects expire/unregister during ticking.
+
 ## Suggested Next Task (Priority Order)
 
 ### Immediate (Session N+1)
-1. **CI/pre-build validator automation** (P1, Effort S): Run editor asset validator as part of pipeline.
-2. **Modifier test expansion** (P2, Effort M): stress and integration coverage.
+1. **Explicit duration policy asset wiring** (P1, Effort S): remove fallback-default dependence in authored content.
+2. **CI/pre-build validator automation** (P1, Effort S): run editor asset validator as part of pipeline.
 3. **ApplyEffectAction integration tests** (P2, Effort M): end-to-end stat flow.
 
 ### Medium-term (Session N+2/N+3)

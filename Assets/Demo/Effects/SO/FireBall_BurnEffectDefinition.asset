@@ -14,10 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DOTEffectDefinition
   _modifiers:
   - {fileID: 11400000, guid: 00dda5ecc6187b64ba4f27954e68f0a9, type: 2}
-  _duration: 5
-  _tickInterval: 0.5
+  _duration: 10
+  _tickInterval: 5
   _maxStacks: 3
   _initialStacks: 1
   _applyOnce: 0
   _stackingPolicy: {fileID: 11400000, guid: c3345527da2dcc340afa6cd32de0e17a, type: 2}
+  _durationPolicy: {fileID: 11400000, guid: 482bff46532945c438e4a976aed97fea, type: 2}
   _damageAmount: 20

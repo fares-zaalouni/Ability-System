@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using AbilitySystem.Core;
 using AbilitySystem.Targeting;
+using AbilitySystem.Utility;
 
 namespace AbilitySystem.Effects
 {
@@ -12,6 +13,34 @@ namespace AbilitySystem.Effects
         public OverTimeEffectGroup()
         {
             Effects = new List<OverTimeEffect>();
+        }
+
+        private OverTimeEffectGroup(List<OverTimeEffect> effects)
+        {
+            if(effects == null)
+            {
+                AbilityDebug.LogWarning("Creating OverTimeEffectGroup with null effects list. Defaulting to empty list.");
+                Effects = new List<OverTimeEffect>();
+            }
+            else
+                Effects = effects;
+        }
+
+        public OverTimeEffectGroup CreateSnapshotExcluding(OverTimeEffect excludedEffect)
+        {
+            if (excludedEffect == null || Effects.Count == 0)
+                return new OverTimeEffectGroup(new List<OverTimeEffect>(Effects));
+
+            var snapshot = new List<OverTimeEffect>(Effects.Count);
+            foreach (var effect in Effects)
+            {
+                if (!ReferenceEquals(effect, excludedEffect))
+                {
+                    snapshot.Add(effect);
+                }
+            }
+
+            return new OverTimeEffectGroup(snapshot);
         }
 
         public void AddEffect(OverTimeEffect effect)
@@ -223,7 +252,7 @@ namespace AbilitySystem.Effects
         }
 
         // Variations that operate only on effects from the same source
-        public void RefreshDurationsBySource(Core.ICaster source)
+        public void RefreshDurationsBySource(ICaster source)
         {
             if (source == null) return;
             foreach (var e in Effects)
@@ -299,7 +328,7 @@ namespace AbilitySystem.Effects
 
         // Extend durations only for effects from the same source
 
-        public void ExtendDurationsBySource(Core.ICaster source, float amount)
+        public void ExtendDurationsBySource(ICaster source, float amount)
         {
             if (source == null) return;
             foreach (var e in Effects)

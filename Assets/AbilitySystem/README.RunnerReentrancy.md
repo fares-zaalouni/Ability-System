@@ -1,9 +1,13 @@
 # Runner Re-entrancy Decision Log
 
-Last Updated: 2026-03-29 (Attributes/Modifiers refactor review: Pattern remains valid. Effects now receive context at construction; runner reentrancy principles unchanged.)
+Last Updated: 2026-03-31 (Attributes/Modifiers and over-time policy refactor review: runner reentrancy pattern remains valid.)
 
 ## Why this exists
 This note documents the re-entrancy decision in the ability pipeline so future changes do not re-introduce event loops.
+
+## Status Note (2026-03-31)
+- `OverTimeEffectLifetimeManager.Tick(...)` now uses indexed loops over snapshots to stay safe when over-time effects unregister during ticking.
+- This change is independent from runner re-entrancy rules and does not alter `AbilityRunner` aftermath semantics.
 
 The core issue we hit:
 - Parent actions (`DoOnSignalAction`, `RepeatAction`, `ConditionalAction`) spawn sub-runners.

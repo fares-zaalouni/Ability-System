@@ -14,5 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AbilitySystem.Effects.BasicStackingPolicyDefinition
   _newInstance: 1
   _stackIfSameSource: 0
-  _durationRefreshPolicy: 0
   _stackingBehavior: 0

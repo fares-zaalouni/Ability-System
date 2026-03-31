@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Reflection;
 using AbilitySystem.Attributes;
 using AbilitySystem.Core;
 using AbilitySystem.Effects;
@@ -42,11 +43,12 @@ namespace AbilitySystem.Tests.EditMode
             var modifiers = new List<IModifier> { modifier };
 
             var stackingPolicy = ScriptableObject.CreateInstance<BasicStackingPolicyDefinition>();
+            var durationPolicy = ScriptableObject.CreateInstance<BasicDurationPolicyDefinition>();
             var definition = ScriptableObject.CreateInstance<TestOverTimeEffectDefinition>();
 
             try
             {
-                definition.Initialize(stackingPolicy);
+                definition.Initialize(stackingPolicy, durationPolicy);
 
                 var dot = new DOTEffect(
                     definition,
@@ -72,7 +74,125 @@ namespace AbilitySystem.Tests.EditMode
             finally
             {
                 Object.DestroyImmediate(definition);
+                Object.DestroyImmediate(durationPolicy);
                 Object.DestroyImmediate(stackingPolicy);
+            }
+        }
+
+        [Test]
+        public void RegisterOverTimeEffect_WhenNewInstanceAdded_DurationPolicyTargetsOnlyPreExistingEffects()
+        {
+            var manager = CreateOverTimeEffectLifetimeManagerForTest();
+            var target = new RecordingDamageTarget();
+            var caster = new FakeCasterWithAttributes();
+
+            var stackingPolicyDefinition = ScriptableObject.CreateInstance<InlineStackingPolicyDefinition>();
+            var durationPolicyDefinition = ScriptableObject.CreateInstance<InlineDurationPolicyDefinition>();
+            var definition = ScriptableObject.CreateInstance<TestOverTimeEffectDefinition>();
+            var spyDurationPolicy = new SpyDurationPolicy();
+
+            try
+            {
+                stackingPolicyDefinition.Initialize(new BasicStackingPolicy(StackingBehavior.None, stackIfSameSource: true, newInstance: true));
+                durationPolicyDefinition.Initialize(spyDurationPolicy);
+                definition.Initialize(stackingPolicyDefinition, durationPolicyDefinition);
+
+                var existingEffect = new TestOverTimeEffect(definition, new AbilityContext(caster), duration: 5f);
+                manager.RegisterOverTimeEffect(target, existingEffect);
+
+                spyDurationPolicy.Reset();
+                spyDurationPolicy.ExpectedExistingEffect = existingEffect;
+
+                var newEffect = new TestOverTimeEffect(definition, new AbilityContext(caster), duration: 5f);
+                manager.RegisterOverTimeEffect(target, newEffect);
+
+                Assert.That(spyDurationPolicy.CallCount, Is.EqualTo(1));
+                Assert.That(spyDurationPolicy.LastGroupContainsExistingEffect, Is.True);
+                Assert.That(spyDurationPolicy.LastGroupContainsNewEffect, Is.False);
+                Assert.That(spyDurationPolicy.LastGroupCount, Is.EqualTo(1));
+            }
+            finally
+            {
+                Object.DestroyImmediate(definition);
+                Object.DestroyImmediate(durationPolicyDefinition);
+                Object.DestroyImmediate(stackingPolicyDefinition);
+                DestroyOverTimeEffectLifetimeManagerForTest(manager);
+            }
+        }
+
+        [Test]
+        [TestCase(StackingBehavior.None, false)]
+        [TestCase(StackingBehavior.None, true)]
+        [TestCase(StackingBehavior.StackAll, false)]
+        [TestCase(StackingBehavior.StackAll, true)]
+        [TestCase(StackingBehavior.StackNewest, false)]
+        [TestCase(StackingBehavior.StackNewest, true)]
+        [TestCase(StackingBehavior.StackOldest, false)]
+        [TestCase(StackingBehavior.StackOldest, true)]
+        public void BasicStackingPolicy_FirstApplyToEmptyGroup_AlwaysAddsNewEffect(StackingBehavior behavior, bool stackIfSameSource)
+        {
+            var policy = new BasicStackingPolicy(behavior, stackIfSameSource, newInstance: false);
+            var stackingPolicyDefinition = ScriptableObject.CreateInstance<InlineStackingPolicyDefinition>();
+            var durationPolicyDefinition = ScriptableObject.CreateInstance<InlineDurationPolicyDefinition>();
+            var definition = ScriptableObject.CreateInstance<TestOverTimeEffectDefinition>();
+
+            try
+            {
+                stackingPolicyDefinition.Initialize(new BasicStackingPolicy(StackingBehavior.None, stackIfSameSource: true, newInstance: true));
+                durationPolicyDefinition.Initialize(new BasicDurationPolicy(DurationRefreshPolicy.None, RefreshPolicy.NeverRefresh));
+                definition.Initialize(stackingPolicyDefinition, durationPolicyDefinition);
+
+                var incomingEffect = new TestOverTimeEffect(definition, new AbilityContext(new FakeCasterWithAttributes()), duration: 5f);
+                var group = new OverTimeEffectGroup();
+                var added = policy.HandleStacking(target: null, newEffect: incomingEffect, existingEffects: group);
+
+                Assert.That(added, Is.True);
+                Assert.That(group.EffectCount, Is.EqualTo(1));
+                Assert.That(group.GetOldestEffect(), Is.SameAs(incomingEffect));
+            }
+            finally
+            {
+                Object.DestroyImmediate(definition);
+                Object.DestroyImmediate(durationPolicyDefinition);
+                Object.DestroyImmediate(stackingPolicyDefinition);
+            }
+        }
+
+        [Test]
+        public void BasicDurationPolicy_ExtendAllWithSameSource_OnlyExtendsMatchingSource()
+        {
+            var casterA = new FakeCasterWithAttributes();
+            var casterB = new FakeCasterWithAttributes();
+
+            var stackingPolicyDefinition = ScriptableObject.CreateInstance<InlineStackingPolicyDefinition>();
+            var durationPolicyDefinition = ScriptableObject.CreateInstance<InlineDurationPolicyDefinition>();
+            var definition = ScriptableObject.CreateInstance<TestOverTimeEffectDefinition>();
+
+            try
+            {
+                stackingPolicyDefinition.Initialize(new BasicStackingPolicy(StackingBehavior.None, stackIfSameSource: true, newInstance: true));
+                durationPolicyDefinition.Initialize(new BasicDurationPolicy(DurationRefreshPolicy.None, RefreshPolicy.NeverRefresh));
+                definition.Initialize(stackingPolicyDefinition, durationPolicyDefinition);
+
+                var sourceEffect = new TestOverTimeEffect(definition, new AbilityContext(casterA), duration: 3f);
+                var sameSourceExisting = new TestOverTimeEffect(definition, new AbilityContext(casterA), duration: 10f);
+                var differentSourceExisting = new TestOverTimeEffect(definition, new AbilityContext(casterB), duration: 10f);
+
+                var group = new OverTimeEffectGroup();
+                group.AddEffect(sameSourceExisting);
+                group.AddEffect(differentSourceExisting);
+
+                var policy = new BasicDurationPolicy(DurationRefreshPolicy.ExtendAll, RefreshPolicy.RefreshIfSameSource);
+                policy.HandleDuration(target: null, newEffect: sourceEffect, existingEffects: group);
+
+                Assert.That(sameSourceExisting.RemainingDuration, Is.EqualTo(13f).Within(0.0001f));
+                Assert.That(differentSourceExisting.RemainingDuration, Is.EqualTo(10f).Within(0.0001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(definition);
+                Object.DestroyImmediate(durationPolicyDefinition);
+                Object.DestroyImmediate(stackingPolicyDefinition);
             }
         }
 
@@ -245,7 +365,7 @@ namespace AbilitySystem.Tests.EditMode
 
         private sealed class TestOverTimeEffectDefinition : OverTimeEffectDefinition
         {
-            public void Initialize(StackingPolicyDefinition stackingPolicy)
+            public void Initialize(StackingPolicyDefinition stackingPolicy, DurationPolicyDefinition durationPolicy = null)
             {
                 _duration = 5f;
                 _tickInterval = 1f;
@@ -253,12 +373,105 @@ namespace AbilitySystem.Tests.EditMode
                 _initialStacks = 1;
                 _applyOnce = false;
                 _stackingPolicy = stackingPolicy;
+                _durationPolicy = durationPolicy;
             }
 
             public override IAbilityEffect CreateEffect(AbilityContext context)
             {
                 throw new System.NotSupportedException("Test-only definition.");
             }
+        }
+
+        private sealed class TestOverTimeEffect : OverTimeEffect
+        {
+            public TestOverTimeEffect(OverTimeEffectDefinition definition, AbilityContext context, float duration)
+                : base(definition, duration, tickInterval: 1f, stacks: 1, maxStacks: 10, context: context)
+            {
+            }
+
+            public override void ApplyTickTo(IAbilityTarget target)
+            {
+            }
+
+            public override void ApplyModifiers(IAbilityTarget target)
+            {
+            }
+        }
+
+        private sealed class InlineStackingPolicyDefinition : StackingPolicyDefinition
+        {
+            private IStackingPolicy _runtimePolicy;
+
+            public void Initialize(IStackingPolicy runtimePolicy)
+            {
+                _runtimePolicy = runtimePolicy;
+            }
+
+            public override IStackingPolicy CreateRuntimeStackingPolicy()
+            {
+                return _runtimePolicy;
+            }
+        }
+
+        private sealed class InlineDurationPolicyDefinition : DurationPolicyDefinition
+        {
+            private IDurationPolicy _runtimePolicy;
+
+            public void Initialize(IDurationPolicy runtimePolicy)
+            {
+                _runtimePolicy = runtimePolicy;
+            }
+
+            public override IDurationPolicy CreateRuntimeDurationPolicy()
+            {
+                return _runtimePolicy;
+            }
+        }
+
+        private sealed class SpyDurationPolicy : IDurationPolicy
+        {
+            public int CallCount { get; private set; }
+            public int LastGroupCount { get; private set; }
+            public bool LastGroupContainsNewEffect { get; private set; }
+            public bool LastGroupContainsExistingEffect { get; private set; }
+            public OverTimeEffect ExpectedExistingEffect { get; set; }
+
+            public void HandleDuration(IAbilityTarget target, OverTimeEffect newEffect, OverTimeEffectGroup existingEffects)
+            {
+                CallCount++;
+                LastGroupCount = existingEffects.EffectCount;
+                LastGroupContainsNewEffect = existingEffects.Effects.Contains(newEffect);
+                LastGroupContainsExistingEffect = ExpectedExistingEffect != null && existingEffects.Effects.Contains(ExpectedExistingEffect);
+            }
+
+            public void Reset()
+            {
+                CallCount = 0;
+                LastGroupCount = 0;
+                LastGroupContainsNewEffect = false;
+                LastGroupContainsExistingEffect = false;
+                ExpectedExistingEffect = null;
+            }
+        }
+
+        private static OverTimeEffectLifetimeManager CreateOverTimeEffectLifetimeManagerForTest()
+        {
+            var instanceField = typeof(OverTimeEffectLifetimeManager).GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic);
+            instanceField?.SetValue(null, null);
+
+            var gameObject = new GameObject("Test_OverTimeEffectLifetimeManager");
+            return gameObject.AddComponent<OverTimeEffectLifetimeManager>();
+        }
+
+        private static void DestroyOverTimeEffectLifetimeManagerForTest(OverTimeEffectLifetimeManager manager)
+        {
+            if (manager != null)
+            {
+                Object.DestroyImmediate(manager.gameObject);
+            }
+
+            var instanceField = typeof(OverTimeEffectLifetimeManager).GetField("_instance", BindingFlags.Static | BindingFlags.NonPublic);
+            instanceField?.SetValue(null, null);
         }
     }
 }

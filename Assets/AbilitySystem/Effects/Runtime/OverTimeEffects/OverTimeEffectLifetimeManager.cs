@@ -26,6 +26,8 @@ namespace AbilitySystem.Effects
         private readonly Dictionary<IAbilityTarget, Dictionary<int, OverTimeEffectGroup>> _activeOverTimeEffects = new();
         private readonly Dictionary<IAbilityTarget, Dictionary<Guid, Action>> _overTimeEffectHandlers = new();
         private readonly List<int> _scratchEmptyEffectTypeIds = new();
+        private readonly List<IAbilityTarget> _scratchTargetsToTick = new();
+        private readonly List<OverTimeEffectGroup> _scratchGroupsToTick = new();
         private readonly List<IAbilityTarget> _scratchTargetsToPrune = new();
         private readonly List<IAbilityTarget> _scratchHandlerTargetsToRemove = new();
         [SerializeField] private float _pruneIntervalSeconds = 0.5f;
@@ -68,7 +70,19 @@ namespace AbilitySystem.Effects
             if (!_activeOverTimeEffects[target].ContainsKey(effect.EffectTypeId))
                 _activeOverTimeEffects[target][effect.EffectTypeId] = new OverTimeEffectGroup();
 
-            if (effect.StackingPolicy.HandleStacking(target, effect, _activeOverTimeEffects[target][effect.EffectTypeId]))
+            var effectGroup = _activeOverTimeEffects[target][effect.EffectTypeId];
+            bool addedNewEffectInstance = effect.StackingPolicy.HandleStacking(target, effect, effectGroup);
+
+            OverTimeEffectGroup durationScopeGroup = effectGroup;
+            if (addedNewEffectInstance)
+            {
+                // Refresh/extend pre-existing effects only when this cast created a new instance.
+                durationScopeGroup = effectGroup.CreateSnapshotExcluding(effect);
+            }
+
+            effect.DurationPolicy.HandleDuration(target, effect, durationScopeGroup);
+            
+            if (addedNewEffectInstance)
             {
                 Action handler = () =>
                 {
@@ -78,10 +92,11 @@ namespace AbilitySystem.Effects
 
                 if (!_overTimeEffectHandlers.ContainsKey(target))
                     _overTimeEffectHandlers[target] = new Dictionary<Guid, Action>();
-                _overTimeEffectHandlers[target][effect.Id] = handler;      
+                _overTimeEffectHandlers[target][effect.Id] = handler;
             }
-            if(_activeOverTimeEffects[target][effect.EffectTypeId].EffectCount == 0)
-                    AbilityDebug.LogWarning("Registering first OverTimeEffect of type " + effect.EffectTypeId +" but it was not added to the group. Check if the stacking policy is set up correctly. Effect: " + effect);
+
+            if (effectGroup.EffectCount == 0)
+                AbilityDebug.LogWarning("Registering first OverTimeEffect of type " + effect.EffectTypeId + " but it was not added to the group. Check if the stacking policy is set up correctly. Effect: " + effect);
         }
 
         public void UnregisterOverTimeEffect(IAbilityTarget target, OverTimeEffect effect)
@@ -101,12 +116,34 @@ namespace AbilitySystem.Effects
 
         private void Tick(float deltaTime)
         {
-            foreach (var targetEntry in _activeOverTimeEffects)
+            _scratchTargetsToTick.Clear();
+            foreach (var target in _activeOverTimeEffects.Keys)
             {
-                var target = targetEntry.Key;
-                foreach (var groupEntry in targetEntry.Value)
+                _scratchTargetsToTick.Add(target);
+            }
+
+            for (int i = 0; i < _scratchTargetsToTick.Count; i++)
+            {
+                var target = _scratchTargetsToTick[i];
+                if (!_activeOverTimeEffects.TryGetValue(target, out var effectsById))
                 {
-                    var group = groupEntry.Value;
+                    continue;
+                }
+
+                _scratchGroupsToTick.Clear();
+                foreach (var group in effectsById.Values)
+                {
+                    _scratchGroupsToTick.Add(group);
+                }
+
+                for (int j = 0; j < _scratchGroupsToTick.Count; j++)
+                {
+                    var group = _scratchGroupsToTick[j];
+                    if (group == null)
+                    {
+                        continue;
+                    }
+
                     group.TickAll(deltaTime, target);
                 }
             }

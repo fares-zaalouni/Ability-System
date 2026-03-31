@@ -7,7 +7,7 @@ Small, data-driven ability framework for Unity. Abilities are authored as Script
 - **Definition → Runtime**: ScriptableObject definitions create runtime objects (e.g., `DamageEffectDefinition` → `DamageEffect`).
 - **Action pipeline**: `AbilityDefinition` contains an ordered `List<AbilityActionDefinition>`. `AbilityInstance` builds `IAbilityAction` objects and runs them with `AbilityRunner.Next()`.
 - **AbilityContext**: typed common fields (`Caster`, `TargetPoint`, `Targets`) plus a blackboard (`Set` / `TryGet`) for custom data. Now passed to effects at construction.
-- **Effects**: implement `IAbilityEffect`. Receive `AbilityContext` at construction for stat/level/metadata access. Instant effects apply immediately; Over-time effects support ticking DoT/buff logic with full modifier support.
+- **Effects**: implement `IAbilityEffect`. Receive `AbilityContext` at construction for stat/level/metadata access. Instant effects apply immediately; Over-time effects support ticking DoT/buff logic with full modifier support and split stacking/duration policy handling.
 - **Projectiles**: world entities that resolve hits and notify the pipeline via events (e.g., `OnHit(HitData)`).
 - **Attributes & Modifiers**: Stat system with base/runtime values, priority-ordered modifier composition, and source-aware (Caster/Target) scaling for flexible damage/heal effects.
 
@@ -81,6 +81,21 @@ _damagePerTick = new Attribute(baseTickDamage);
 - Call `OverTimeEffectLifetimeManager.ReApplyOverTimeEffectsModifier(target)` when source/target stats change.
 - DOT clears old modifiers → re-evaluates bonus attributes → re-adds them.
 - Safe by design: no duplicate stacking.
+
+### Over-Time Policy Model (Stacking + Duration)
+
+Over-time behavior is now split into two policy axes:
+- **StackingPolicy** controls whether the incoming effect is merged into existing effects or added as a new instance.
+- **DurationPolicy** controls how existing effect durations are refreshed/extended.
+
+Runtime flow in `OverTimeEffectLifetimeManager.RegisterOverTimeEffect(...)`:
+1. Apply stacking policy first.
+2. Apply duration policy second.
+3. If stacking added a new instance, duration is evaluated on a snapshot excluding the new instance so refresh/extend targets pre-existing effects only.
+
+Safety notes:
+- `OverTimeEffect` now warns and falls back to safe defaults if a definition is missing stacking/duration policies.
+- `OverTimeEffectLifetimeManager.Tick(...)` uses indexed loops over stable snapshots to avoid iterator invalidation when effects unregister during ticking.
 
 ### Design Choices Explained
 
@@ -210,6 +225,7 @@ OverTimeEffectLifetimeManager.Instance.ReApplyOverTimeEffectsModifier(target);
 - **Snapshot semantics**: Damage/heal amounts lock in at effect creation. Target defensive logic (armor, shields) re-evaluates each impact. This prevents 100-zombie stacking.
 - `DamageEffect` instances are intended for single application. Reusing the same runtime instance can compound bound modifiers across applies. The pipeline creates a fresh effect per target apply.
 - DOT reapply: Call `ReApplyOverTimeEffectsModifier()` if source/target stats change mid-effect. Safe by design (clears old modifiers before re-adding).
+- Over-time policy defaults are runtime fallbacks for resilience; production assets should still set both stacking and duration policies explicitly.
 - Prefer `IAttributeHolder` for stat containers instead of concrete type checks.
 - Use the blackboard for optional, ability-specific data; keep common fields strongly typed on `AbilityContext`.
 - For pipeline-pausing projectiles, ensure `OnHit` updates context before `runner.Next()` is called.
@@ -235,3 +251,6 @@ OverTimeEffectLifetimeManager.Instance.ReApplyOverTimeEffectsModifier(target);
     - DOT modifier reapply idempotency
     - effect-instance isolation per caster
     - explicit single-instance DamageEffect compounding behavior
+    - over-time registration: duration policy targets pre-existing effects when a new instance is added
+    - stacking policy: first application to empty group always adds new effect
+    - duration policy: same-source ExtendAll only extends matching-source effects

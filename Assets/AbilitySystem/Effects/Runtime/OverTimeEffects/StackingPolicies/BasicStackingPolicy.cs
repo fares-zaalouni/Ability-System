@@ -4,21 +4,25 @@ namespace AbilitySystem.Effects
 {
     public class BasicStackingPolicy : IStackingPolicy
     {
-        private DurationRefreshPolicy _durationRefreshPolicy;
         private StackingBehavior _stackingBehavior;
         private bool _newInstance;
         private bool _stackIfSameSource;
 
-        public BasicStackingPolicy(DurationRefreshPolicy durationRefreshPolicy, StackingBehavior stackingBehavior, bool stackIfSameSource, bool newInstance = false)
+        public BasicStackingPolicy(StackingBehavior stackingBehavior, bool stackIfSameSource, bool newInstance = false)
         {
-            _durationRefreshPolicy = durationRefreshPolicy;
             _stackingBehavior = stackingBehavior;
             _stackIfSameSource = stackIfSameSource;
             _newInstance = newInstance;
         }
+
         public bool HandleStacking(IAbilityTarget target, OverTimeEffect newEffect, OverTimeEffectGroup existingEffects)
         {
             bool addedNew = false;
+            if(existingEffects.Effects == null || existingEffects.Effects.Count == 0)
+            {
+                existingEffects.AddEffect(newEffect);
+                return true;
+            }
             if (!_stackIfSameSource)
             {
                 switch (_stackingBehavior)
@@ -73,33 +77,7 @@ namespace AbilitySystem.Effects
             }
 
 
-            switch (_durationRefreshPolicy)
-            {
-                case DurationRefreshPolicy.RefreshAll:
-                    existingEffects.RefreshAllDurations();
-                    break;
-                case DurationRefreshPolicy.RefreshNewest:
-                    if (existingEffects.Effects != null && existingEffects.Effects.Count > 0)
-                        existingEffects.GetNewestEffect().RefreshDuration();
-                    break;
-                case DurationRefreshPolicy.RefreshOldest:
-                    if (existingEffects.Effects != null && existingEffects.Effects.Count > 0)
-                        existingEffects.GetOldestEffect().RefreshDuration();
-                    break;
-                case DurationRefreshPolicy.ExtendAll:
-                    existingEffects.ExtendAllDurations(newEffect.TotalDuration);
-                    break;
-                case DurationRefreshPolicy.ExtendNewest:
-                    if (existingEffects.Effects != null && existingEffects.Effects.Count > 0)
-                        existingEffects.GetNewestEffect().ExtendDuration(newEffect.TotalDuration);
-                    break;
-                case DurationRefreshPolicy.ExtendOldest:
-                    if (existingEffects.Effects != null && existingEffects.Effects.Count > 0)
-                        existingEffects.GetOldestEffect().ExtendDuration(newEffect.TotalDuration);
-                    break;
-                case DurationRefreshPolicy.None:
-                    break;
-            }
+            
 
             if (_newInstance && !addedNew)
             {

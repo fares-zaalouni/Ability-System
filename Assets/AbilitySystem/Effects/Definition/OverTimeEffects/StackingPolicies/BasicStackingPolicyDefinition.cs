@@ -5,9 +5,9 @@ namespace AbilitySystem.Effects
     [CreateAssetMenu(fileName = "BasicStackingPolicyDefinition", menuName = "Ability System/Effects/Stacking Policies/Basic Stacking Policy")]
     public class BasicStackingPolicyDefinition : StackingPolicyDefinition
     {
-        public override IStackingPolicy CreateRuntimeStackingStrategy()
+        public override IStackingPolicy CreateRuntimeStackingPolicy()
         {
-            return new BasicStackingPolicy(_durationRefreshPolicy, _stackingBehavior, _stackIfSameSource, _newInstance);
+            return new BasicStackingPolicy(_stackingBehavior, _stackIfSameSource, _newInstance);
         }
     }
 }

@@ -2,6 +2,8 @@ using AbilitySystem.Targeting;
 using AbilitySystem.Core;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using AbilitySystem.Utility;
 
 namespace AbilitySystem.Effects
 {
@@ -18,6 +20,7 @@ namespace AbilitySystem.Effects
         public int Stacks { get; private set; }
         public int MaxStacks { get; private set; }
         public IStackingPolicy StackingPolicy { get; private set; }
+        public IDurationPolicy DurationPolicy { get; private set; }
         public int EffectTypeId => _definition.Id;
         public Guid Id { get; } = Guid.NewGuid();
 
@@ -47,17 +50,37 @@ namespace AbilitySystem.Effects
             ApplyOnce = applyOnce;
             Stacks = stacks;
             MaxStacks = maxStacks;
-            StackingPolicy = definition.StackingPolicy.CreateRuntimeStackingStrategy();
+            if (definition.StackingPolicy == null)
+            {
+                AbilityDebug.LogWarning($"OverTimeEffectDefinition {definition.name} has no StackingPolicy defined. Defaulting to BasicStackingPolicy with None stacking behavior that creates a new effect.");
+                StackingPolicy = new BasicStackingPolicy(StackingBehavior.None, stackIfSameSource: true);
+            }
+            else
+            {
+                StackingPolicy = definition.StackingPolicy.CreateRuntimeStackingPolicy();
+            }
+
+            if (definition.DurationPolicy == null)
+            {
+                AbilityDebug.LogWarning($"OverTimeEffectDefinition {definition.name} has no DurationPolicy defined. Defaulting to BasicDurationPolicy with None behavior.");
+                DurationPolicy = new BasicDurationPolicy(DurationRefreshPolicy.None, RefreshPolicy.NeverRefresh);
+            }
+
+            else
+            {
+                DurationPolicy = definition.DurationPolicy.CreateRuntimeDurationPolicy();
+            }
+
             Context = context;
         }
-        
+
         public void Tick(float deltaTime, IAbilityTarget target)
         {
             RemainingDuration -= deltaTime;
             TimeSinceLastTick += deltaTime;
             TickCount++;
             EffectTick?.Invoke();
-            
+
             if (ApplyOnce)
             {
                 ApplyTickTo(target);
@@ -70,7 +93,7 @@ namespace AbilitySystem.Effects
                     ApplyTickTo(target);
                     TimeSinceLastTick -= TickInterval;
                 }
-                if(RemainingDuration <= 0f && !_isExpired)
+                if (RemainingDuration <= 0f && !_isExpired)
                 {
                     _isExpired = true;
                     EffectExpired?.Invoke();
